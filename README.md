@@ -1,20 +1,22 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Studio Alora — studioalora.online
 
-# Run and deploy your AI Studio app
+React + Vite + Tailwind site for Studio Alora, deployed on Vercel.
 
-This contains everything you need to run your app locally.
+| Path | Page |
+| --- | --- |
+| `/` | Check-in and session timer (the original app) |
+| `/book` | Booking request, sent over WhatsApp |
+| `/calculator` | Price calculator |
+| `/studio` | Gallery, equipment, rules, rental terms, contact |
+| `/collab` | Collaboration conditions and application |
 
-View your app in AI Studio: https://ai.studio/apps/55eb3b35-249b-46df-987b-db8c00fa7087
+- Rates, phone numbers and links live in `src/lib/site.ts`. Change them there only.
+- Photos are in `public/images`.
+- `firestore.rules` includes a `requests` rule for saving booking and collab requests. Deploy it with `firebase deploy --only firestore:rules`.
 
-## Run Locally
+```
+npm install
+npm run dev
+```
 
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Pushing to `main` deploys to production on Vercel. Other branches get a preview URL.

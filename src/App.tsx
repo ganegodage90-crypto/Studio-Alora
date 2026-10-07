@@ -25,14 +25,17 @@ import { cn } from './lib/utils';
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, addDoc } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
+import { Link } from 'react-router-dom';
+import { TopBar } from './components/Shell';
+import { RATES, SITE_URL, SITE_HOST, lkr } from './lib/site';
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
-const HOURLY_RATE_MIN = 8500;
-const HOURLY_RATE_EXTENDED = 6500;
-const COMMERCIAL_RATE_MIN = 12500;
-const COMMERCIAL_RATE_EXTENDED = 9500;
+const HOURLY_RATE_MIN = RATES.nonCommercial.firstHour;
+const HOURLY_RATE_EXTENDED = RATES.nonCommercial.perHour;
+const COMMERCIAL_RATE_MIN = RATES.commercial.firstHour;
+const COMMERCIAL_RATE_EXTENDED = RATES.commercial.perHour;
 const HELP_PHONE_NUMBER = '070 277 277 4';
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CQJsMMv_cZxQEAE/review';
 const BANK_DETAILS = { bank: 'Nations Trust Bank', name: 'K K DILSHAN', account: '200560043329' };
@@ -104,7 +107,7 @@ export default function App() {
 
   useEffect(() => {
     if (showQR && qrCanvasRef.current) {
-      QRCode.toCanvas(qrCanvasRef.current, 'https://studio-alora-2.vercel.app', {
+      QRCode.toCanvas(qrCanvasRef.current, SITE_URL, {
         width: 280, margin: 2, color: { dark: '#000000', light: '#ffffff' },
       });
     }
@@ -312,7 +315,7 @@ export default function App() {
     ctx.fillText(`${(lastPricing || pricing).finalTotal.toLocaleString()} LKR`, W - 40, y + 28);
     ctx.fillStyle = '#0a0807'; ctx.fillRect(0, H - 60, W, 60);
     ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.font = '11px Arial'; ctx.textAlign = 'center';
-    ctx.fillText('Thank you for choosing Studio Alora  •  studio-alora-2.vercel.app', W / 2, H - 25);
+    ctx.fillText('Thank you for choosing Studio Alora  •  ' + SITE_HOST, W / 2, H - 25);
     const a = document.createElement('a');
     a.href = cv.toDataURL('image/png');
     a.download = `studio-alora-invoice-${session.name.replace(/\s+/g, '-')}.png`;
@@ -322,7 +325,8 @@ export default function App() {
   const josefin: React.CSSProperties = { fontFamily: "'Josefin Sans', sans-serif", fontWeight: 100, letterSpacing: '0.25em' };
 
   return (
-    <div className="min-h-screen bg-[#080604] text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-[#080604] text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center justify-center p-4 pt-24">
+      <TopBar />
 
       {/* ── Global animated orb background — always visible ── */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -418,11 +422,11 @@ export default function App() {
                 <div className="bg-white/[0.04] border border-[#C4956A]/10 p-4 rounded-2xl space-y-2">
                   <div className="flex justify-between text-xs font-bold text-white/35 uppercase">
                     <span>1 Hour (Flat)</span>
-                    <span className="text-[#C4956A]">{isCommercial ? '12,500' : '8,500'} LKR</span>
+                    <span className="text-[#C4956A]">{lkr(isCommercial ? COMMERCIAL_RATE_MIN : HOURLY_RATE_MIN)}</span>
                   </div>
                   <div className="flex justify-between text-xs font-bold text-white/35 uppercase">
-                    <span>Extra Over 1 Hour</span>
-                    <span className="text-[#C4956A]">{isCommercial ? '9,500' : '6,500'} LKR/HR</span>
+                    <span>2+ Hours (Per Hour)</span>
+                    <span className="text-[#C4956A]">{lkr(isCommercial ? COMMERCIAL_RATE_EXTENDED : HOURLY_RATE_EXTENDED)}/HR</span>
                   </div>
                   <div className="pt-1 border-t border-white/[0.06]">
                     <p className="text-[9px] text-white/20 uppercase tracking-wider">
@@ -441,10 +445,10 @@ export default function App() {
                   <QrCode size={14} /> Scan to Check-in
                 </button>
 
-                <button type="button" onClick={() => setShowTestMode(true)}
-                  className="w-full text-white/15 hover:text-white/35 transition-colors uppercase font-bold text-[10px] tracking-widest pt-2">
-                  [ Developer Price Test Mode ]
-                </button>
+                <Link to="/calculator"
+                  className="block w-full text-center text-white/30 hover:text-[#C4956A] transition-colors uppercase font-bold text-[10px] tracking-widest pt-2">
+                  Price Calculator
+                </Link>
               </form>
             </motion.div>
           )}
@@ -827,7 +831,7 @@ export default function App() {
               <div className="flex justify-center"><canvas ref={qrCanvasRef} className="rounded-xl" /></div>
               <div className="space-y-1">
                 <p className="text-sm font-black uppercase tracking-wide">Scan to Check-in</p>
-                <p className="text-black/40 text-[10px] font-bold tracking-widest uppercase">studio-alora-2.vercel.app</p>
+                <p className="text-black/40 text-[10px] font-bold tracking-widest uppercase">{SITE_HOST}</p>
               </div>
               <div className="flex gap-3">
                 <button onClick={async () => {
@@ -835,7 +839,7 @@ export default function App() {
                   const qrDataUrl = qrCanvasRef.current.toDataURL('image/png');
                   const win = window.open('', '_blank');
                   if (!win) return;
-                  win.document.write(`<!DOCTYPE html><html><head><title>Studio Alora QR</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial Black,Arial,sans-serif;background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}.card{text-align:center;padding:40px 48px;border:3px solid #000;border-radius:24px;display:inline-block}.title{font-size:28px;font-weight:900;letter-spacing:-1px;text-transform:uppercase;font-style:italic}.sub{font-size:9px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#999;margin-top:4px}img{display:block;margin:24px auto;border-radius:12px}.cta{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:2px}.url{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-top:6px}@media print{body{margin:0}.card{border:3px solid #000}}</style></head><body><div class="card"><div class="title">STUDIO ALORA</div><div class="sub">The Visual Collective</div><img src="${qrDataUrl}" width="260" height="260"/><div class="cta">Scan to Check-in</div><div class="url">studio-alora-2.vercel.app</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
+                  win.document.write(`<!DOCTYPE html><html><head><title>Studio Alora QR</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial Black,Arial,sans-serif;background:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh}.card{text-align:center;padding:40px 48px;border:3px solid #000;border-radius:24px;display:inline-block}.title{font-size:28px;font-weight:900;letter-spacing:-1px;text-transform:uppercase;font-style:italic}.sub{font-size:9px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:#999;margin-top:4px}img{display:block;margin:24px auto;border-radius:12px}.cta{font-size:13px;font-weight:900;text-transform:uppercase;letter-spacing:2px}.url{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#aaa;margin-top:6px}@media print{body{margin:0}.card{border:3px solid #000}}</style></head><body><div class="card"><div class="title">STUDIO ALORA</div><div class="sub">The Visual Collective</div><img src="${qrDataUrl}" width="260" height="260"/><div class="cta">Scan to Check-in</div><div class="url">${SITE_HOST}</div></div><script>window.onload=()=>window.print()<\/script></body></html>`);
                   win.document.close();
                 }} className="flex-1 flex items-center justify-center gap-2 bg-black text-white font-black py-3 rounded-2xl uppercase tracking-tighter text-sm hover:bg-black/80 transition-colors">
                   <Printer size={16} /> Print
@@ -844,7 +848,7 @@ export default function App() {
                   if (!qrCanvasRef.current) return;
                   const size = 1200, pad = 80, qrSize = size - pad * 2;
                   const qrCanvas = document.createElement('canvas');
-                  await QRCode.toCanvas(qrCanvas, 'https://studio-alora-2.vercel.app', { width: qrSize, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
+                  await QRCode.toCanvas(qrCanvas, SITE_URL, { width: qrSize, margin: 2, color: { dark: '#000000', light: '#ffffff' } });
                   const out = document.createElement('canvas');
                   out.width = size; out.height = size;
                   const ctx = out.getContext('2d')!;
@@ -853,7 +857,7 @@ export default function App() {
                   ctx.fillStyle = '#000000'; ctx.font = '900 52px Arial Black, Arial'; ctx.textAlign = 'center';
                   ctx.fillText('STUDIO ALORA', size / 2, 60);
                   ctx.font = '700 36px Arial Black, Arial'; ctx.fillText('SCAN TO CHECK-IN', size / 2, size - 36);
-                  ctx.fillStyle = '#aaaaaa'; ctx.font = '400 22px Arial'; ctx.fillText('studio-alora-2.vercel.app', size / 2, size - 8);
+                  ctx.fillStyle = '#aaaaaa'; ctx.font = '400 22px Arial'; ctx.fillText(SITE_HOST, size / 2, size - 8);
                   const a = document.createElement('a'); a.href = out.toDataURL('image/png'); a.download = 'studio-alora-qr.png'; a.click();
                 }} className="flex-1 flex items-center justify-center gap-2 bg-black/10 text-black font-black py-3 rounded-2xl uppercase tracking-tighter text-sm hover:bg-black/20 transition-colors">
                   <Download size={16} /> PNG
