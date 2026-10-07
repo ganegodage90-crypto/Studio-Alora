@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Menu, X, MessageCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { waLink } from '../lib/site';
+import { waLink, RATES, PAX_RULE, SessionKind } from '../lib/site';
 
 // Solid translucent card: no backdrop blur, which is very slow on phones.
 export const glass = 'bg-[#1b1510]/85 border border-[#C4956A]/15 rounded-3xl shadow-[0_0_60px_rgba(196,149,106,0.06)]';
@@ -91,6 +91,24 @@ export function Toggle<T extends string>({ value, onChange, options }: { value: 
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Non-commercial / commercial switch. The split is by head count, so each side shows its people limit. */
+export function KindToggle({ value, onChange }: { value: SessionKind; onChange: (v: SessionKind) => void }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.03]">
+        {(['nonCommercial', 'commercial'] as const).map(k => (
+          <button key={k} type="button" onClick={() => onChange(k)} aria-pressed={value === k}
+            className={cn('flex-1 py-2.5 px-2 transition-all', value === k ? 'bg-[#C4956A] text-black' : 'text-white/40 hover:text-white/70')}>
+            <span className="block text-[10px] font-black uppercase tracking-widest">{RATES[k].label}</span>
+            <span className={cn('block text-[11px] font-bold mt-0.5', value === k ? 'text-black/70' : 'text-white/45')}>{RATES[k].pax}</span>
+          </button>
+        ))}
+      </div>
+      <p className="text-[11px] text-white/45 text-center leading-snug">{PAX_RULE}</p>
     </div>
   );
 }

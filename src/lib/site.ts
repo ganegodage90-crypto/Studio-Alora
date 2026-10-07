@@ -1,7 +1,7 @@
 // Single source of truth for rates, contacts and site links.
 export const RATES = {
-  nonCommercial: { firstHour: 8500, perHour: 6500, halfHour: 3500, label: 'Non-Commercial', note: 'Up to 6 pax · Personal / Creative use' },
-  commercial: { firstHour: 12400, perHour: 9500, halfHour: 3500, label: 'Commercial', note: 'Above 6 pax · Commercial / Advertising use' },
+  nonCommercial: { firstHour: 8500, perHour: 6500, halfHour: 3500, label: 'Non-Commercial', pax: 'Up to 6 people', note: 'Up to 6 people, including crew' },
+  commercial: { firstHour: 12400, perHour: 9500, halfHour: 3500, label: 'Commercial', pax: 'More than 6 people', note: 'More than 6 people, including crew' },
 } as const;
 
 export type SessionKind = keyof typeof RATES;
@@ -21,6 +21,8 @@ export const PACKAGES = [
   { id: '20', hours: 20, label: '20 Hours', open: false, rate: { nonCommercial: 5500, commercial: 8400 } },
   { id: '30', hours: 30, label: '30+ Hours', open: true, rate: { nonCommercial: 5000, commercial: 7900 } },
 ] as const;
+
+export const PAX_RULE = 'Your rate depends on how many people attend, including photographers and crew.';
 
 export const SITE_URL = 'https://www.studioalora.online';
 export const SITE_HOST = 'studioalora.online';

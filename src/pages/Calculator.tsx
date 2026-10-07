@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { PageShell, Toggle, glass, label, primaryBtn } from '../components/Shell';
+import { PageShell, KindToggle, glass, label, primaryBtn } from '../components/Shell';
 import { Estimate, HOUR_OPTIONS } from '../components/Estimate';
 import { SessionKind } from '../lib/site';
 import { cn } from '../lib/utils';
@@ -12,7 +12,7 @@ export default function Calculator() {
   return (
     <PageShell title="Price Calculator" kicker="Know your total before you book">
       <div className={`${glass} p-8 space-y-6`}>
-        <Toggle value={kind} onChange={setKind} options={[{ value: 'nonCommercial', label: 'Non-Commercial' }, { value: 'commercial', label: 'Commercial' }]} />
+        <KindToggle value={kind} onChange={setKind} />
         <div className="space-y-2">
           <p className={label}>Session Length</p>
           <div className="flex gap-2 flex-wrap">

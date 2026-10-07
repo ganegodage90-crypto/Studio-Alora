@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MessageCircle, CheckCircle2 } from 'lucide-react';
-import { PageShell, Toggle, glass, field, label, primaryBtn, ghostBtn } from '../components/Shell';
+import { PageShell, KindToggle, glass, field, label, primaryBtn, ghostBtn } from '../components/Shell';
 import { Estimate, HOUR_OPTIONS } from '../components/Estimate';
 import { RATES, SessionKind, priceFor, lkr, waLink, HOTLINE } from '../lib/site';
 import { saveRequest } from '../lib/requests';
@@ -58,7 +58,7 @@ export default function Book() {
   return (
     <PageShell title="Book The Studio" kicker="Send a booking request">
       <form onSubmit={submit} className={`${glass} p-8 space-y-6`}>
-        <Toggle value={kind} onChange={setKind} options={[{ value: 'nonCommercial', label: 'Non-Commercial' }, { value: 'commercial', label: 'Commercial' }]} />
+        <KindToggle value={kind} onChange={setKind} />
         <div className="space-y-4">
           <div className="space-y-1.5 min-w-0"><label htmlFor="b-name" className={label}>Name or Brand</label>
             <input id="b-name" required autoComplete="name" className={field} value={f.name} onChange={set('name')} /></div>
@@ -76,13 +76,9 @@ export default function Book() {
                 {HOUR_OPTIONS.map(h => <option key={h} value={h} className="bg-[#1a1512]">{h} hour{h === 1 ? '' : 's'}</option>)}
               </select></div>
             <div className="space-y-1.5 min-w-0"><label htmlFor="b-pax" className={label}>People (incl. crew)</label>
-              <input id="b-pax" required type="number" min={1} max={40} inputMode="numeric" className={field} value={f.pax} onChange={set('pax')} /></div>
+              <input id="b-pax" required type="number" min={1} max={40} inputMode="numeric" className={field} value={f.pax}
+                onChange={e => { set('pax')(e); const n = Number(e.target.value); if (n > 0) setKind(n > 6 ? 'commercial' : 'nonCommercial'); }} /></div>
           </div>
-          {kind === 'nonCommercial' && Number(f.pax) > 6 && (
-            <p className="text-amber-400 text-xs font-bold bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3">
-              Non-commercial sessions are limited to 6 people. For larger groups choose Commercial.
-            </p>
-          )}
           <div className="space-y-1.5 min-w-0"><label htmlFor="b-shoot" className={label}>Type of Shoot (optional)</label>
             <input id="b-shoot" placeholder="Portrait, product, fashion, video…" className={field} value={f.shoot} onChange={set('shoot')} /></div>
           <div className="space-y-1.5 min-w-0"><label htmlFor="b-notes" className={label}>Notes (optional)</label>

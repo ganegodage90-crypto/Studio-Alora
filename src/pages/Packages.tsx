@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MessageCircle, CheckCircle2, Check } from 'lucide-react';
-import { PageShell, Toggle, glass, field, label, primaryBtn, ghostBtn } from '../components/Shell';
+import { PageShell, KindToggle, glass, field, label, primaryBtn, ghostBtn } from '../components/Shell';
 import { Section } from '../components/Blocks';
 import { PACKAGES, RATES, SessionKind, lkr, waLink } from '../lib/site';
 import { saveRequest } from '../lib/requests';
@@ -15,7 +15,7 @@ const CONDITIONS: [string, string][] = [
   ['How hours are counted', 'Minimum session is 1 hour, counted in 30-minute steps. Each hour after 8:00 PM counts as 1.5 hours.'],
   ['Not transferable', 'A package is for one photographer or brand. Hours cannot be shared, sublet or resold.'],
   ['No refunds once started', 'A package cannot be refunded after its first session.'],
-  ['Studio rules apply', 'All studio rules and rental terms apply to every session, including the 6-person limit for non-commercial use.'],
+  ['Studio rules apply', 'All studio rules and rental terms apply to every session, A non-commercial package covers sessions of up to 6 people; larger sessions need a commercial package.'],
 ];
 
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -57,7 +57,7 @@ export default function Packages() {
   return (
     <PageShell wide title="Monthly Packages" kicker="Buy hours in advance and save">
       <div className="max-w-lg mx-auto w-full">
-        <Toggle value={kind} onChange={setKind} options={[{ value: 'nonCommercial', label: 'Non-Commercial' }, { value: 'commercial', label: 'Commercial' }]} />
+        <KindToggle value={kind} onChange={setKind} />
       </div>
 
       <div className="grid md:grid-cols-3 gap-4">

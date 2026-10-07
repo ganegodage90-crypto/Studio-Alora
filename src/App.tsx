@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { saveSession } from './lib/db';
 import { Link } from 'react-router-dom';
-import { glass } from './components/Shell';
+import { glass, KindToggle } from './components/Shell';
 import { RATES, SITE_URL, SITE_HOST, lkr } from './lib/site';
 
 
@@ -354,19 +354,7 @@ export default function App() {
 
               <form onSubmit={handleStart} className="space-y-6">
 
-                {/* Session type toggle */}
-                <div className="flex rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.03]">
-                  <button type="button" onClick={() => setIsCommercial(false)}
-                    className={cn('flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all',
-                      !isCommercial ? 'bg-[#C4956A] text-black' : 'text-white/35 hover:text-white/60')}>
-                    Non-Commercial
-                  </button>
-                  <button type="button" onClick={() => setIsCommercial(true)}
-                    className={cn('flex-1 py-3 text-[10px] font-black uppercase tracking-widest transition-all',
-                      isCommercial ? 'bg-[#C4956A] text-black' : 'text-white/35 hover:text-white/60')}>
-                    Commercial
-                  </button>
-                </div>
+                <KindToggle value={isCommercial ? 'commercial' : 'nonCommercial'} onChange={k => setIsCommercial(k === 'commercial')} />
 
                 <div className="space-y-4">
                   <div className="relative group">
@@ -413,7 +401,7 @@ export default function App() {
                   </div>
                   <div className="pt-1 border-t border-white/[0.06]">
                     <p className="text-[9px] text-white/20 uppercase tracking-wider">
-                      {isCommercial ? 'Above 6 pax · Commercial / Advertising use' : 'Up to 6 pax · Personal / Creative use'}
+                      {RATES[isCommercial ? 'commercial' : 'nonCommercial'].note}
                     </p>
                   </div>
                 </div>
