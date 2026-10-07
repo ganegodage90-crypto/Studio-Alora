@@ -22,15 +22,11 @@ import {
 import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
+import { saveSession } from './lib/db';
 import { Link } from 'react-router-dom';
-import { TopBar } from './components/Shell';
+import { TopBar, Orbs, glass } from './components/Shell';
 import { RATES, SITE_URL, SITE_HOST, lkr } from './lib/site';
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
 
 const HOURLY_RATE_MIN = RATES.nonCommercial.firstHour;
 const HOURLY_RATE_EXTENDED = RATES.nonCommercial.perHour;
@@ -41,8 +37,6 @@ const GOOGLE_REVIEW_URL = 'https://g.page/r/CQJsMMv_cZxQEAE/review';
 const BANK_DETAILS = { bank: 'Nations Trust Bank', name: 'K K DILSHAN', account: '200560043329' };
 const COCO = '#C4956A';
 
-// Shared glass card style
-const glass = 'bg-white/[0.04] backdrop-blur-2xl border border-[#C4956A]/15 rounded-3xl shadow-[0_0_80px_rgba(196,149,106,0.07)]';
 
 type SessionState = 'IDLE' | 'ACTIVE' | 'SUMMARY';
 
@@ -131,7 +125,7 @@ export default function App() {
       const pending = localStorage.getItem('studio_pending_save');
       if (pending) {
         try {
-          await addDoc(collection(db, 'sessions'), JSON.parse(pending));
+          await saveSession(JSON.parse(pending));
           localStorage.removeItem('studio_pending_save');
         } catch (err) {
           console.error('Retry upload failed:', err);
@@ -264,7 +258,7 @@ export default function App() {
       amount: p.finalTotal,
     };
     try {
-      await addDoc(collection(db, 'sessions'), payload);
+      await saveSession(payload);
       localStorage.removeItem('studio_pending_save');
     } catch (err) {
       localStorage.setItem('studio_pending_save', JSON.stringify(payload));
@@ -344,32 +338,7 @@ export default function App() {
     <div className="min-h-screen bg-[#080604] text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center justify-center p-4 pt-24">
       <TopBar />
 
-      {/* ── Global animated orb background — always visible ── */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ scale: [1, 1.35, 1], opacity: [0.18, 0.36, 0.18], x: [0, 50, 0], y: [0, -40, 0] }}
-          transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full bg-[#C4956A] blur-[90px]"
-        />
-        <motion.div
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.10, 0.22, 0.10], x: [0, -60, 0], y: [0, 50, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-1/4 right-1/4 w-[320px] h-[320px] rounded-full bg-[#8B5E3C] blur-[80px]"
-        />
-        <motion.div
-          animate={{ scale: [1, 1.5, 1], opacity: [0.08, 0.18, 0.08], x: [0, 30, 0], y: [0, 60, 0] }}
-          transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-          className="absolute top-1/4 left-1/4 w-[280px] h-[280px] rounded-full bg-[#E8C4A0] blur-[100px]"
-        />
-        {[...Array(7)].map((_, i) => (
-          <motion.div key={i}
-            animate={{ y: [0, -140, 0], opacity: [0, 0.5, 0], x: [0, (i % 2 === 0 ? 18 : -18), 0] }}
-            transition={{ duration: 4 + i * 1.1, repeat: Infinity, delay: i * 0.7, ease: 'easeInOut' }}
-            style={{ left: `${12 + i * 13}%`, bottom: '8%' }}
-            className="absolute w-[3px] h-[3px] rounded-full bg-[#C4956A]/50"
-          />
-        ))}
-      </div>
+      <Orbs />
 
       <main className="w-full max-w-lg relative z-10">
         <AnimatePresence mode="wait">
@@ -405,13 +374,13 @@ export default function App() {
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C4956A]/30 group-focus-within:text-[#C4956A] transition-colors" size={20} />
                     <input required type="text" placeholder="YOUR NAME OR BRAND NAME"
-                      className="w-full bg-white/[0.06] border border-white/[0.08] rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all uppercase font-medium placeholder:text-white/20 text-[#F0EDE8] backdrop-blur-sm"
+                      className="w-full bg-white/[0.06] border border-white/[0.08] rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all uppercase font-medium placeholder:text-white/20 text-[#F0EDE8]"
                       value={session.name} onChange={e => setSession(prev => ({ ...prev, name: e.target.value }))} />
                   </div>
                   <div className="relative group">
                     <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-[#C4956A]/30 group-focus-within:text-[#C4956A] transition-colors" size={20} />
                     <input required type="tel" placeholder="PHONE NUMBER"
-                      className="w-full bg-white/[0.06] border border-white/[0.08] rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all font-mono placeholder:text-white/20 text-[#F0EDE8] backdrop-blur-sm"
+                      className="w-full bg-white/[0.06] border border-white/[0.08] rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all font-mono placeholder:text-white/20 text-[#F0EDE8]"
                       value={session.phone} onChange={e => setSession(prev => ({ ...prev, phone: e.target.value }))} />
                   </div>
                 </div>
@@ -645,7 +614,7 @@ export default function App() {
 
       {/* Floating Call for Help */}
       <button onClick={() => setShowHelp(true)}
-        className="fixed bottom-8 right-8 w-14 h-14 bg-white/[0.06] backdrop-blur-md hover:bg-[#C4956A] hover:text-black border border-[#C4956A]/20 rounded-full flex items-center justify-center transition-all z-50 group">
+        className="fixed bottom-8 right-8 w-14 h-14 bg-[#1a1512] hover:bg-[#C4956A] hover:text-black border border-[#C4956A]/20 rounded-full flex items-center justify-center transition-all z-50 group">
         <Phone size={22} />
         <span className="absolute right-16 scale-0 group-hover:scale-100 transition-transform bg-[#C4956A] text-black px-3 py-1 rounded-full text-[10px] font-black uppercase whitespace-nowrap">Call for Help</span>
       </button>
@@ -656,7 +625,7 @@ export default function App() {
         {/* Pay Online */}
         {paymentModal === 'online' && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4">
+            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               className={`${glass} p-8 max-w-sm w-full space-y-6`}>
               <div className="text-center space-y-2">
@@ -710,7 +679,7 @@ export default function App() {
         {/* Greeting */}
         {showGreeting && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4">
+            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.8, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 30 }}
               className={`${glass} p-10 max-w-sm w-full text-center space-y-6`}>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
@@ -739,7 +708,7 @@ export default function App() {
         {/* Help */}
         {showHelp && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4">
+            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               className={`${glass} p-8 max-w-sm w-full space-y-6 text-center`}>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#C4956A]/10 border border-[#C4956A]/20 text-[#C4956A]">
@@ -764,7 +733,7 @@ export default function App() {
         {/* End confirm */}
         {showEndConfirm && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4">
+            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               className={`${glass} p-8 max-w-sm w-full space-y-6 text-center`}>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500">
@@ -790,7 +759,7 @@ export default function App() {
         {/* Price tester */}
         {showTestMode && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4">
+            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               className={`${glass} p-8 max-w-sm w-full space-y-6`}>
               <div className="text-center space-y-2">
@@ -835,7 +804,7 @@ export default function App() {
         {/* QR */}
         {showQR && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-lg z-[100] flex items-center justify-center p-4"
+            className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4"
             onClick={() => setShowQR(false)}>
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               onClick={e => e.stopPropagation()}
@@ -888,7 +857,7 @@ export default function App() {
         {/* Pause PIN */}
         {showPausePin && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 backdrop-blur-lg z-[100] flex items-center justify-center p-4">
+            className="fixed inset-0 bg-black/85 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
               className={`${glass} p-8 max-w-sm w-full space-y-5`}>
               <div className="text-center space-y-1">

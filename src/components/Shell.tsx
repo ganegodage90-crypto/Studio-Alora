@@ -1,43 +1,24 @@
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { Menu, X, MessageCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { waLink } from '../lib/site';
 
-export const glass = 'bg-white/[0.04] backdrop-blur-2xl border border-[#C4956A]/15 rounded-3xl shadow-[0_0_80px_rgba(196,149,106,0.07)]';
+// Solid translucent card: no backdrop blur, which is very slow on phones.
+export const glass = 'bg-[#1b1510]/85 border border-[#C4956A]/15 rounded-3xl shadow-[0_0_60px_rgba(196,149,106,0.06)]';
 export const josefin: React.CSSProperties = { fontFamily: "'Josefin Sans', sans-serif", fontWeight: 100, letterSpacing: '0.25em' };
-export const field = 'w-full min-w-0 bg-white/[0.06] border border-white/[0.08] rounded-2xl py-4 px-4 focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all font-medium placeholder:text-white/20 text-[#F0EDE8] backdrop-blur-sm [color-scheme:dark]';
+export const field = 'w-full min-w-0 bg-white/[0.06] border border-white/[0.08] rounded-2xl py-4 px-4 focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all font-medium placeholder:text-white/20 text-[#F0EDE8] [color-scheme:dark]';
 export const label = 'text-[10px] font-black uppercase tracking-widest text-white/35 ml-1';
 export const primaryBtn = 'w-full bg-[#C4956A] text-black font-black py-5 rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-transform uppercase tracking-tighter text-base sm:text-lg px-4 text-center disabled:opacity-40 disabled:hover:scale-100';
 export const ghostBtn = 'w-full flex items-center justify-center gap-2 bg-white/[0.04] border border-white/[0.08] text-white/60 hover:text-white hover:border-[#C4956A]/40 font-bold py-3 rounded-2xl transition-all uppercase tracking-widest text-[11px]';
 
+// Static glow drawn with gradients (no blur filters), with one slow opacity pulse.
 export function Orbs() {
   return (
-    <div className="fixed inset-0 overflow-hidden pointer-events-none">
-      <motion.div
-        animate={{ scale: [1, 1.35, 1], opacity: [0.18, 0.36, 0.18], x: [0, 50, 0], y: [0, -40, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full bg-[#C4956A] blur-[90px]"
-      />
-      <motion.div
-        animate={{ scale: [1.2, 1, 1.2], opacity: [0.10, 0.22, 0.10], x: [0, -60, 0], y: [0, 50, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-1/4 right-1/4 w-[320px] h-[320px] rounded-full bg-[#8B5E3C] blur-[80px]"
-      />
-      <motion.div
-        animate={{ scale: [1, 1.5, 1], opacity: [0.08, 0.18, 0.08], x: [0, 30, 0], y: [0, 60, 0] }}
-        transition={{ duration: 13, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-        className="absolute top-1/4 left-1/4 w-[280px] h-[280px] rounded-full bg-[#E8C4A0] blur-[100px]"
-      />
-      {[...Array(7)].map((_, i) => (
-        <motion.div key={i}
-          animate={{ y: [0, -140, 0], opacity: [0, 0.5, 0], x: [0, (i % 2 === 0 ? 18 : -18), 0] }}
-          transition={{ duration: 4 + i * 1.1, repeat: Infinity, delay: i * 0.7, ease: 'easeInOut' }}
-          style={{ left: `${12 + i * 13}%`, bottom: '8%' }}
-          className="absolute w-[3px] h-[3px] rounded-full bg-[#C4956A]/50"
-        />
-      ))}
+    <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden">
+      <div className="absolute inset-0" style={{ background:
+        'radial-gradient(60% 45% at 50% 30%, rgba(196,149,106,0.22), transparent 70%), radial-gradient(40% 35% at 78% 78%, rgba(139,94,60,0.16), transparent 70%), radial-gradient(38% 32% at 20% 22%, rgba(232,196,160,0.10), transparent 70%)' }} />
+      <div className="absolute inset-0 orb-pulse" style={{ background: 'radial-gradient(50% 38% at 50% 34%, rgba(196,149,106,0.16), transparent 70%)' }} />
     </div>
   );
 }
@@ -58,7 +39,7 @@ export function TopBar() {
   const wa = waLink('Hi Studio Alora, I would like to book the studio.');
   return (
     <header className="fixed top-0 left-0 right-0 z-[60] p-3">
-      <nav className="mx-auto max-w-5xl bg-[#080604]/70 backdrop-blur-2xl border border-[#C4956A]/15 rounded-2xl px-4 py-2.5">
+      <nav className="mx-auto max-w-5xl bg-[#0f0b08]/95 border border-[#C4956A]/15 rounded-2xl px-4 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <Link to="/" style={josefin} className="text-base uppercase text-[#C4956A] whitespace-nowrap leading-none pt-1">Studio Alora</Link>
           <div className="hidden md:flex items-center gap-1">
@@ -92,14 +73,13 @@ export function PageShell({ title, kicker, wide, children }: { title: string; ki
     <div className="min-h-screen bg-[#080604] text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center px-4 pt-24 pb-16 overflow-x-hidden">
       <Orbs />
       <TopBar />
-      <motion.main initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}
-        className={cn('w-full relative z-10 space-y-6', wide ? 'max-w-5xl' : 'max-w-lg')}>
+      <main className={cn('w-full relative z-10 space-y-6 page-in', wide ? 'max-w-5xl' : 'max-w-lg')}>
         <div className="space-y-2 text-center pt-4 pb-2">
           <h1 style={josefin} className="text-2xl sm:text-4xl uppercase leading-tight text-[#C4956A]">{title}</h1>
           <p className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase">{kicker}</p>
         </div>
         {children}
-      </motion.main>
+      </main>
     </div>
   );
 }

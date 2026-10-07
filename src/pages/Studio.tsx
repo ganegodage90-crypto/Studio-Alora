@@ -113,8 +113,8 @@ export default function Studio() {
         {PHOTOS.map((p, i) => (
           <button key={p.src} type="button" onClick={() => setOpen(i)}
             className="block w-full mb-3 overflow-hidden rounded-2xl border border-[#C4956A]/15 focus:outline-none focus:ring-2 focus:ring-[#C4956A] group">
-            <img src={`/images/${p.src}.jpg`} alt={p.alt} loading={i < 3 ? 'eager' : 'lazy'} width={p.tall ? 1200 : 1800} height={p.tall ? 1800 : 1200}
-              className="w-full h-auto block transition-transform duration-500 group-hover:scale-[1.04]" />
+            <img src={`/images/thumb/${p.src}.jpg`} alt={p.alt} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" width={p.tall ? 1200 : 1800} height={p.tall ? 1800 : 1200}
+              className="w-full h-auto block bg-white/[0.04]" />
           </button>
         ))}
       </section>
@@ -145,7 +145,7 @@ export default function Studio() {
 
       {open !== null && (
         <div role="dialog" aria-modal="true" aria-label={PHOTOS[open].alt} onClick={() => setOpen(null)}
-          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-lg flex items-center justify-center p-4">
+          className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4">
           <img src={`/images/${PHOTOS[open].src}.jpg`} alt={PHOTOS[open].alt} className="max-w-full max-h-full rounded-2xl" />
           <button type="button" aria-label="Close" onClick={() => setOpen(null)}
             className="absolute top-4 right-4 w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center text-white"><X size={20} /></button>
