@@ -20,3 +20,5 @@ npm run dev
 ```
 
 Pushing to `main` deploys to production on Vercel. Other branches get a preview URL.
+
+- Staff PIN: set `STAFF_PIN` in Vercel → Settings → Environment Variables (Production and Preview). It is checked by `api/verify-pin.js` and is never sent to the browser.
