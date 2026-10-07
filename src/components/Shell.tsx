@@ -12,14 +12,11 @@ export const label = 'text-[10px] font-black uppercase tracking-widest text-whit
 export const primaryBtn = 'w-full bg-[#C4956A] text-black font-black py-5 rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-transform uppercase tracking-tighter text-base sm:text-lg px-4 text-center disabled:opacity-40 disabled:hover:scale-100';
 export const ghostBtn = 'w-full flex items-center justify-center gap-2 bg-white/[0.04] border border-white/[0.08] text-white/60 hover:text-white hover:border-[#C4956A]/40 font-bold py-3 rounded-2xl transition-all uppercase tracking-widest text-[11px]';
 
-// Static glow drawn with gradients (no blur filters), with one slow opacity pulse.
+// One static glow behind every page. No blur filters and no animation, so phones stay cool.
 export function Orbs() {
   return (
-    <div aria-hidden className="fixed inset-0 pointer-events-none overflow-hidden">
-      <div className="absolute inset-0" style={{ background:
-        'radial-gradient(60% 45% at 50% 30%, rgba(196,149,106,0.22), transparent 70%), radial-gradient(40% 35% at 78% 78%, rgba(139,94,60,0.16), transparent 70%), radial-gradient(38% 32% at 20% 22%, rgba(232,196,160,0.10), transparent 70%)' }} />
-      <div className="absolute inset-0 orb-pulse" style={{ background: 'radial-gradient(50% 38% at 50% 34%, rgba(196,149,106,0.16), transparent 70%)' }} />
-    </div>
+    <div aria-hidden className="fixed inset-0 pointer-events-none" style={{ background:
+      'radial-gradient(60% 45% at 50% 30%, rgba(196,149,106,0.26), rgba(196,149,106,0) 70%), radial-gradient(40% 35% at 78% 78%, rgba(139,94,60,0.16), rgba(139,94,60,0) 70%), radial-gradient(38% 32% at 20% 22%, rgba(232,196,160,0.10), rgba(232,196,160,0) 70%)' }} />
   );
 }
 
@@ -70,9 +67,7 @@ export function TopBar() {
 
 export function PageShell({ title, kicker, wide, children }: { title: string; kicker: string; wide?: boolean; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#080604] text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center px-4 pt-24 pb-16 overflow-x-hidden">
-      <Orbs />
-      <TopBar />
+    <div className="min-h-screen text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center px-4 pt-24 pb-16 overflow-x-hidden">
       <main className={cn('w-full relative z-10 space-y-6 page-in', wide ? 'max-w-5xl' : 'max-w-lg')}>
         <div className="space-y-2 text-center pt-4 pb-2">
           <h1 style={josefin} className="text-2xl sm:text-4xl uppercase leading-tight text-[#C4956A]">{title}</h1>

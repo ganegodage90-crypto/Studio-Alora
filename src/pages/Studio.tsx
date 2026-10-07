@@ -85,8 +85,47 @@ const Defs = ({ items }: { items: [string, string][] }) => (
   </dl>
 );
 
+const Photo: React.FC<{ p: (typeof PHOTOS)[number]; eager: boolean; onOpen: () => void }> = ({ p, eager, onOpen }) => {
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <button type="button" onClick={onOpen} aria-label={`Open photo: ${p.alt}`}
+      style={{ aspectRatio: p.tall ? '2 / 3' : '3 / 2' }}
+      className={`relative block w-full overflow-hidden rounded-2xl border border-[#C4956A]/15 focus:outline-none focus:ring-2 focus:ring-[#C4956A] ${loaded ? '' : 'shimmer'}`}>
+      <img src={`/images/thumb/${p.src}.jpg`} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async"
+        ref={el => { if (el?.complete && el.naturalWidth) setLoaded(true); }}
+        onLoad={() => setLoaded(true)}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`} />
+    </button>
+  );
+};
+
+function useColumnCount() {
+  const q = '(min-width: 768px)';
+  const [n, setN] = useState(() => (window.matchMedia(q).matches ? 3 : 2));
+  useEffect(() => {
+    const m = window.matchMedia(q);
+    const on = () => setN(m.matches ? 3 : 2);
+    m.addEventListener('change', on);
+    return () => m.removeEventListener('change', on);
+  }, []);
+  return n;
+}
+
+// Put each photo in the currently shortest column so the columns end at similar heights.
+function layout(n: number) {
+  const cols: number[][] = Array.from({ length: n }, () => []);
+  const h = new Array(n).fill(0);
+  PHOTOS.forEach((p, i) => {
+    const c = h.indexOf(Math.min(...h));
+    cols[c].push(i);
+    h[c] += p.tall ? 1.5 : 0.667;
+  });
+  return cols;
+}
+
 export default function Studio() {
   const [open, setOpen] = useState<number | null>(null);
+  const columns = layout(useColumnCount());
   useEffect(() => {
     if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
   }, []);
@@ -109,13 +148,11 @@ export default function Studio() {
         ))}
       </nav>
 
-      <section id="spaces" className="columns-2 md:columns-3 gap-3 scroll-mt-24">
-        {PHOTOS.map((p, i) => (
-          <button key={p.src} type="button" onClick={() => setOpen(i)}
-            className="block w-full mb-3 overflow-hidden rounded-2xl border border-[#C4956A]/15 focus:outline-none focus:ring-2 focus:ring-[#C4956A] group">
-            <img src={`/images/thumb/${p.src}.jpg`} alt={p.alt} loading={i < 2 ? 'eager' : 'lazy'} decoding="async" width={p.tall ? 1200 : 1800} height={p.tall ? 1800 : 1200}
-              className="w-full h-auto block bg-white/[0.04]" />
-          </button>
+      <section id="spaces" className="flex gap-3 items-start scroll-mt-24">
+        {columns.map((col, c) => (
+          <div key={c} className="flex-1 min-w-0 flex flex-col gap-3">
+            {col.map(i => <Photo key={PHOTOS[i].src} p={PHOTOS[i]} eager={i < 4} onOpen={() => setOpen(i)} />)}
+          </div>
         ))}
       </section>
 

@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { saveSession } from './lib/db';
 import { Link } from 'react-router-dom';
-import { TopBar, Orbs, glass } from './components/Shell';
+import { glass } from './components/Shell';
 import { RATES, SITE_URL, SITE_HOST, lkr } from './lib/site';
 
 
@@ -335,10 +335,8 @@ export default function App() {
   const josefin: React.CSSProperties = { fontFamily: "'Josefin Sans', sans-serif", fontWeight: 100, letterSpacing: '0.25em' };
 
   return (
-    <div className="min-h-screen bg-[#080604] text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center justify-center p-4 pt-24">
-      <TopBar />
+    <div className="min-h-screen text-[#F0EDE8] font-sans selection:bg-[#C4956A] selection:text-black flex flex-col items-center justify-center p-4 pt-24">
 
-      <Orbs />
 
       <main className="w-full max-w-lg relative z-10">
         <AnimatePresence mode="wait">
