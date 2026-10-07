@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Menu, X, MessageCircle } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { waLink } from '../lib/site';
+import { waLink, RATES, PAX_RULE, SessionKind } from '../lib/site';
 
 // Solid translucent card: no backdrop blur, which is very slow on phones.
 export const glass = 'bg-[#1b1510]/85 border border-[#C4956A]/15 rounded-3xl shadow-[0_0_60px_rgba(196,149,106,0.06)]';
@@ -22,9 +22,11 @@ export function Orbs() {
 
 const NAV = [
   { to: '/', label: 'Home' },
+  { to: '/gallery', label: 'Gallery' },
+  { to: '/equipment', label: 'Equipment' },
+  { to: '/rules', label: 'Rules' },
+  { to: '/packages', label: 'Packages' },
   { to: '/book', label: 'Book' },
-  { to: '/calculator', label: 'Calculator' },
-  { to: '/studio', label: 'Studio' },
   { to: '/collab', label: 'Collab' },
 ];
 
@@ -39,7 +41,7 @@ export function TopBar() {
       <nav className="mx-auto max-w-5xl bg-[#0f0b08]/95 border border-[#C4956A]/15 rounded-2xl px-4 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <Link to="/" style={josefin} className="text-base uppercase text-[#C4956A] whitespace-nowrap leading-none pt-1">Studio Alora</Link>
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {NAV.map(n => <NavLink key={n.to} to={n.to} end className={link}>{n.label}</NavLink>)}
             <a href={wa} target="_blank" rel="noreferrer"
               className="ml-2 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#C4956A]/40 text-[#C4956A] hover:bg-[#C4956A] hover:text-black text-[10px] font-black uppercase tracking-widest transition-all">
@@ -47,12 +49,12 @@ export function TopBar() {
             </a>
           </div>
           <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(o => !o)}
-            className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.08] text-white/70">
+            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.08] text-white/70">
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
         {open && (
-          <div className="md:hidden grid grid-cols-2 gap-2 pt-3 pb-1">
+          <div className="lg:hidden grid grid-cols-2 gap-2 pt-3 pb-1">
             {NAV.map(n => <NavLink key={n.to} to={n.to} end onClick={() => setOpen(false)} className={(s) => cn(link(s), 'text-center py-3 border border-white/[0.06]')}>{n.label}</NavLink>)}
             <a href={wa} target="_blank" rel="noreferrer"
               className="flex items-center justify-center gap-1.5 py-3 rounded-xl border border-[#C4956A]/40 text-[#C4956A] text-[10px] font-black uppercase tracking-widest">
@@ -89,6 +91,24 @@ export function Toggle<T extends string>({ value, onChange, options }: { value: 
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+/** Non-commercial / commercial switch. The split is by head count, so each side shows its people limit. */
+export function KindToggle({ value, onChange }: { value: SessionKind; onChange: (v: SessionKind) => void }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.03]">
+        {(['nonCommercial', 'commercial'] as const).map(k => (
+          <button key={k} type="button" onClick={() => onChange(k)} aria-pressed={value === k}
+            className={cn('flex-1 py-2.5 px-2 transition-all', value === k ? 'bg-[#C4956A] text-black' : 'text-white/40 hover:text-white/70')}>
+            <span className="block text-[10px] font-black uppercase tracking-widest">{RATES[k].label}</span>
+            <span className={cn('block text-[11px] font-bold mt-0.5', value === k ? 'text-black/70' : 'text-white/45')}>{RATES[k].pax}</span>
+          </button>
+        ))}
+      </div>
+      <p className="text-[11px] text-white/45 text-center leading-snug">{PAX_RULE}</p>
     </div>
   );
 }
