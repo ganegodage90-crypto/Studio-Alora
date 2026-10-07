@@ -15,6 +15,13 @@ export function priceFor(hours: number, kind: SessionKind) {
   return { roundedHours: rounded, subtotal: whole * r.perHour + (rounded % 1 !== 0 ? r.halfHour : 0) };
 }
 
+// Monthly packages: hours bought in advance at a lower hourly rate.
+export const PACKAGES = [
+  { id: '10', hours: 10, label: '10 Hours', open: false, rate: { nonCommercial: 6000, commercial: 9000 } },
+  { id: '20', hours: 20, label: '20 Hours', open: false, rate: { nonCommercial: 5500, commercial: 8400 } },
+  { id: '30', hours: 30, label: '30+ Hours', open: true, rate: { nonCommercial: 5000, commercial: 7900 } },
+] as const;
+
 export const SITE_URL = 'https://www.studioalora.online';
 export const SITE_HOST = 'studioalora.online';
 export const HOTLINE = '070 277 2774';

@@ -8,12 +8,18 @@ import './index.css';
 const pages = {
   book: () => import('./pages/Book.tsx'),
   calculator: () => import('./pages/Calculator.tsx'),
-  studio: () => import('./pages/Studio.tsx'),
+  gallery: () => import('./pages/Gallery.tsx'),
+  equipment: () => import('./pages/Equipment.tsx'),
+  rules: () => import('./pages/Rules.tsx'),
+  packages: () => import('./pages/Packages.tsx'),
   collab: () => import('./pages/Collab.tsx'),
 };
 const Book = lazy(pages.book);
 const Calculator = lazy(pages.calculator);
-const Studio = lazy(pages.studio);
+const Gallery = lazy(pages.gallery);
+const Equipment = lazy(pages.equipment);
+const Rules = lazy(pages.rules);
+const Packages = lazy(pages.packages);
 const Collab = lazy(pages.collab);
 
 // Download the other pages in the background so menu taps open instantly.
@@ -30,7 +36,11 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/" element={<App />} />
           <Route path="/book" element={<Book />} />
           <Route path="/calculator" element={<Calculator />} />
-          <Route path="/studio" element={<Studio />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/equipment" element={<Equipment />} />
+          <Route path="/rules" element={<Rules />} />
+          <Route path="/packages" element={<Packages />} />
+          <Route path="/studio" element={<Navigate to="/gallery" replace />} />
           <Route path="/collab" element={<Collab />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

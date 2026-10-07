@@ -93,7 +93,7 @@ export default function Book() {
 
         <label className="flex items-start gap-3 text-xs text-white/50 leading-relaxed cursor-pointer">
           <input type="checkbox" required checked={agree} onChange={e => setAgree(e.target.checked)} className="mt-0.5 w-4 h-4 accent-[#C4956A]" />
-          <span>I have read the <a href="/studio#rules" target="_blank" rel="noreferrer" className="text-[#C4956A] underline">studio rules and rental terms</a>. Cancellations within 72 hours of the booking are not refunded.</span>
+          <span>I have read the <a href="/rules" target="_blank" rel="noreferrer" className="text-[#C4956A] underline">studio rules and rental terms</a>. Cancellations within 72 hours of the booking are not refunded.</span>
         </label>
 
         <button type="submit" className={primaryBtn}><MessageCircle size={22} /> Send Request on WhatsApp</button>

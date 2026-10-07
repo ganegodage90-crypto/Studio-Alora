@@ -22,9 +22,11 @@ export function Orbs() {
 
 const NAV = [
   { to: '/', label: 'Home' },
+  { to: '/gallery', label: 'Gallery' },
+  { to: '/equipment', label: 'Equipment' },
+  { to: '/rules', label: 'Rules' },
+  { to: '/packages', label: 'Packages' },
   { to: '/book', label: 'Book' },
-  { to: '/calculator', label: 'Calculator' },
-  { to: '/studio', label: 'Studio' },
   { to: '/collab', label: 'Collab' },
 ];
 
@@ -39,7 +41,7 @@ export function TopBar() {
       <nav className="mx-auto max-w-5xl bg-[#0f0b08]/95 border border-[#C4956A]/15 rounded-2xl px-4 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <Link to="/" style={josefin} className="text-base uppercase text-[#C4956A] whitespace-nowrap leading-none pt-1">Studio Alora</Link>
-          <div className="hidden md:flex items-center gap-1">
+          <div className="hidden lg:flex items-center gap-1">
             {NAV.map(n => <NavLink key={n.to} to={n.to} end className={link}>{n.label}</NavLink>)}
             <a href={wa} target="_blank" rel="noreferrer"
               className="ml-2 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#C4956A]/40 text-[#C4956A] hover:bg-[#C4956A] hover:text-black text-[10px] font-black uppercase tracking-widest transition-all">
@@ -47,12 +49,12 @@ export function TopBar() {
             </a>
           </div>
           <button type="button" aria-label="Menu" aria-expanded={open} onClick={() => setOpen(o => !o)}
-            className="md:hidden w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.08] text-white/70">
+            className="lg:hidden w-10 h-10 flex items-center justify-center rounded-xl border border-white/[0.08] text-white/70">
             {open ? <X size={18} /> : <Menu size={18} />}
           </button>
         </div>
         {open && (
-          <div className="md:hidden grid grid-cols-2 gap-2 pt-3 pb-1">
+          <div className="lg:hidden grid grid-cols-2 gap-2 pt-3 pb-1">
             {NAV.map(n => <NavLink key={n.to} to={n.to} end onClick={() => setOpen(false)} className={(s) => cn(link(s), 'text-center py-3 border border-white/[0.06]')}>{n.label}</NavLink>)}
             <a href={wa} target="_blank" rel="noreferrer"
               className="flex items-center justify-center gap-1.5 py-3 rounded-xl border border-[#C4956A]/40 text-[#C4956A] text-[10px] font-black uppercase tracking-widest">

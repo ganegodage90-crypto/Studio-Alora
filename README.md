@@ -7,7 +7,10 @@ React + Vite + Tailwind site for Studio Alora, deployed on Vercel.
 | `/` | Check-in and session timer (the original app) |
 | `/book` | Booking request, sent over WhatsApp |
 | `/calculator` | Price calculator |
-| `/studio` | Gallery, equipment, rules, rental terms, contact |
+| `/gallery` | Photos |
+| `/equipment` | Equipment and facilities |
+| `/rules` | Studio rules, rental terms, contact |
+| `/packages` | Monthly packages and request form |
 | `/collab` | Collaboration conditions and application |
 
 - Rates, phone numbers and links live in `src/lib/site.ts`. Change them there only.
