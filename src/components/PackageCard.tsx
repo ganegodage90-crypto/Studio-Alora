@@ -1,5 +1,5 @@
 import React from 'react';
-import { PackageView, hrs, day, daysLeft } from '../lib/packages';
+import { PackageView, hrs, day, daysLeft, clock, span } from '../lib/packages';
 import { RATES, lkr } from '../lib/site';
 
 /** Hours bought, used and left, with the session list. Used on My Hours and the staff page. */
@@ -37,14 +37,31 @@ export function PackageCard({ p, children }: { p: PackageView; children?: React.
         {p.startedAt && p.expiresAt ? `Started ${day(p.startedAt)} · valid until ${day(p.expiresAt)}` : 'The 30 days start with the first session.'}
       </p>
       {p.sessions.length > 0 && (
-        <ul className="divide-y divide-white/[0.06] border-t border-white/[0.06]">
-          {[...p.sessions].reverse().map((s, i) => (
-            <li key={i} className="flex justify-between gap-3 py-2 text-sm">
-              <span className="text-white/60">{day(s.at)}{s.note ? ` · ${s.note}` : ''}</span>
-              <span className="font-black tabular-nums">{s.hours > 0 ? '' : '−'}{hrs(Math.abs(s.hours))}</span>
-            </li>
-          ))}
-        </ul>
+        <div className="border-t border-white/[0.06] pt-4 space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Session record</p>
+          <ul className="space-y-2">
+            {[...p.sessions].reverse().map((s, i) => (
+              <li key={i} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 space-y-2">
+                <div className="flex justify-between items-baseline gap-3">
+                  <span className="text-sm font-black">{day(s.start || s.at)}</span>
+                  <span className="text-sm font-black tabular-nums text-[#C4956A]">{s.hours > 0 ? '' : '−'}{hrs(Math.abs(s.hours))} {s.hours > 0 ? 'used' : 'returned'}</span>
+                </div>
+                {s.start && s.end ? (
+                  <dl className="grid grid-cols-3 gap-2 text-center">
+                    {[['Started', clock(s.start)], ['Ended', clock(s.end)], ['Rest', s.restMs ? span(s.restMs) : 'None']].map(([l, v]) => (
+                      <div key={l}>
+                        <dt className="text-[9px] font-black uppercase tracking-widest text-white/35">{l}</dt>
+                        <dd className="text-xs font-bold tabular-nums text-white/80">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                ) : (
+                  <p className="text-xs text-white/45">{s.note || 'Times were not recorded for this entry.'}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
       {children}
     </div>

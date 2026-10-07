@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     const key = `s${startedAt}`;
     let entry = p.sessions.find(s => s.key === key); // a repeat call for the same session never charges twice
     if (!entry) {
-      entry = { key, at: endedAt, hours: countedHours(endedAt, durationMs) };
+      entry = { key, at: endedAt, start: startedAt, end: endedAt, restMs: Math.max(0, endedAt - startedAt - durationMs), hours: countedHours(endedAt, durationMs) };
       p.sessions.push(entry);
       if (!p.startedAt) p.startedAt = startedAt;
       await savePackage(p);

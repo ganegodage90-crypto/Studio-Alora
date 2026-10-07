@@ -74,7 +74,7 @@ export function publicView(p) {
     name: p.name, kind: p.kind, hours: p.hours, rate: p.rate, used,
     left: Math.max(0, p.hours - used), extra: Math.max(0, used - p.hours),
     startedAt: p.startedAt || null, expiresAt: expiresAt(p),
-    sessions: p.sessions.map(s => ({ at: s.at, hours: s.hours, note: s.note || '' })),
+    sessions: p.sessions.map(s => ({ at: s.at, hours: s.hours, note: s.note || '', start: s.start || null, end: s.end || null, restMs: s.restMs || 0 })),
   };
 }
 
