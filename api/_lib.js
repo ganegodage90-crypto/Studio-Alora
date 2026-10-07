@@ -82,3 +82,35 @@ export function send(res, status, body) {
   res.setHeader('Cache-Control', 'no-store');
   return res.status(status).json(body);
 }
+
+// ---- Invoices -------------------------------------------------------------
+const INV = 'alora:invoices';
+export async function allInvoices() {
+  const flat = (await redis(['HGETALL', INV])) || [];
+  const out = [];
+  for (let i = 1; i < flat.length; i += 2) out.push(JSON.parse(flat[i]));
+  return out.sort((a, b) => b.seq - a.seq);
+}
+export const saveInvoice = inv => redis(['HSET', INV, inv.id, JSON.stringify(inv)]);
+export const deleteInvoice = id => redis(['HDEL', INV, id]);
+/** Next number in the series: SA-0001, SA-0002, … Numbers are never reused. */
+export async function nextInvoiceNumber() {
+  const seq = Number(await redis(['INCR', 'alora:invoice_seq']));
+  return { seq, number: `SA-${String(seq).padStart(4, '0')}` };
+}
+
+const text = (v, max) => String(v ?? '').trim().slice(0, max);
+const money = v => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 && n < 1e9 ? n : 0; };
+/** Keep only known fields, with sane sizes, from whatever the browser sent. */
+export function cleanInvoice(b) {
+  const c = b.client || {};
+  const items = (Array.isArray(b.items) ? b.items : []).slice(0, 30)
+    .map(i => ({ desc: text(i.desc, 200), qty: Math.max(0, Math.min(1000, Number(i.qty) || 0)), rate: money(i.rate) }))
+    .filter(i => i.desc);
+  return {
+    date: Number(b.date) > 0 ? Number(b.date) : Date.now(),
+    client: { name: text(c.name, 80), phone: text(c.phone, 30), address: text(c.address, 200), email: text(c.email, 120) },
+    items, discount: money(b.discount), advance: money(b.advance),
+    method: text(b.method, 40), status: b.status === 'paid' ? 'paid' : 'unpaid', notes: text(b.notes, 500),
+  };
+}

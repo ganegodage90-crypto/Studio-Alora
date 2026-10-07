@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { PageShell, KindToggle, glass, field, label, primaryBtn, ghostBtn } from '../components/Shell';
 import { PackageCard } from '../components/PackageCard';
+import { StaffInvoices } from '../components/StaffInvoices';
+import { cn } from '../lib/utils';
 import { api, StaffPackage } from '../lib/packages';
 import { PACKAGES, SessionKind, lkr } from '../lib/site';
 
@@ -21,6 +23,7 @@ export default function Staff() {
   const [f, setF] = useState({ name: '', phone: '', hours: '10', rate: '' });
   const [adjust, setAdjust] = useState<Record<string, string>>({});
   const [confirmDel, setConfirmDel] = useState<string | null>(null);
+  const [tab, setTab] = useState<'invoices' | 'packages'>('invoices');
 
   const tier = PACKAGES.find(p => String(p.hours) === f.hours);
   const rate = Number(f.rate) || (tier ? tier.rate[kind] : 0);
@@ -38,7 +41,7 @@ export default function Staff() {
 
   if (!list) {
     return (
-      <PageShell title="Staff" kicker="Monthly package records">
+      <PageShell title="Staff" kicker="Invoices and monthly packages">
         <form onSubmit={e => { e.preventDefault(); call({ action: 'list' }); }} className={`${glass} p-8 space-y-4`}>
           <div className="space-y-1.5"><label htmlFor="s-pin" className={label}>Staff PIN</label>
             <input id="s-pin" required type="password" inputMode="numeric" autoComplete="off" className={`${field} text-center text-2xl font-black tracking-[0.5em]`}
@@ -56,7 +59,14 @@ export default function Staff() {
   };
 
   return (
-    <PageShell wide title="Staff" kicker="Monthly package records">
+    <PageShell wide title="Staff" kicker="Invoices and monthly packages">
+      <div className="flex rounded-2xl border border-white/[0.08] overflow-hidden bg-white/[0.03] max-w-lg mx-auto w-full">
+        {(['invoices', 'packages'] as const).map(t => (
+          <button key={t} type="button" aria-pressed={tab === t} onClick={() => setTab(t)}
+            className={cn('flex-1 py-3 text-[10px] font-black uppercase tracking-widest', tab === t ? 'bg-[#C4956A] text-black' : 'text-white/40 hover:text-white/70')}>{t}</button>
+        ))}
+      </div>
+      {tab === 'invoices' ? <StaffInvoices pin={pin} /> : <>
       {error && <p role="alert" className="text-red-400 text-sm font-bold text-center">{error}</p>}
       <div className="grid lg:grid-cols-2 gap-6 items-start">
         <form onSubmit={create} className={`${glass} p-6 sm:p-8 space-y-4`}>
@@ -104,6 +114,7 @@ export default function Staff() {
           ))}
         </div>
       </div>
+      </>}
     </PageShell>
   );
 }

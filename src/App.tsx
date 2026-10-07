@@ -24,9 +24,10 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { saveSession } from './lib/db';
 import { api, PackageView, hrs } from './lib/packages';
+import { Invoice, InvoiceDraft, downloadInvoicePdf } from './lib/invoices';
 import { Link } from 'react-router-dom';
 import { glass, glassSolid, KindToggle } from './components/Shell';
-import { RATES, SITE_URL, SITE_HOST, HOTLINE, lkr } from './lib/site';
+import { RATES, SITE_URL, SITE_HOST, HOTLINE, BANK, lkr } from './lib/site';
 
 
 const HOURLY_RATE_MIN = RATES.nonCommercial.firstHour;
@@ -35,7 +36,7 @@ const COMMERCIAL_RATE_MIN = RATES.commercial.firstHour;
 const COMMERCIAL_RATE_EXTENDED = RATES.commercial.perHour;
 const HELP_PHONE_NUMBER = HOTLINE;
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CQJsMMv_cZxQEAE/review';
-const BANK_DETAILS = { bank: 'Nations Trust Bank', name: 'K K DILSHAN', account: '200560043329' };
+const BANK_DETAILS = BANK;
 const COCO = '#C4956A';
 
 
@@ -99,6 +100,7 @@ export default function App() {
   const [pkgOffer, setPkgOffer] = useState<PackageView | null>(null);
   const [pkgBusy, setPkgBusy] = useState(false);
   const [pkgError, setPkgError] = useState('');
+  const [lastInvoice, setLastInvoice] = useState<InvoiceDraft | null>(null);
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -266,6 +268,23 @@ export default function App() {
       duration: `${h}h ${m}m`,
       amount: p.finalTotal,
     };
+    // Numbered invoice for this session (kept in the staff invoice list).
+    const clock = (t: number) => new Date(t).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    const kindLabel = isCommercial ? 'Commercial' : 'Non-commercial';
+    const when = `${clock(session.startTime || endTime)} – ${clock(endTime)}`;
+    const items = pkgUse
+      ? [{ desc: `Studio session – ${kindLabel}, ${when}. ${hrs(pkgUse.charged)} taken from monthly package (${hrs(pkgUse.pkg.left)} left).`, qty: pkgUse.charged, rate: 0 },
+         ...(pkgUse.extraHours > 0 ? [{ desc: 'Hours beyond monthly package, at package rate', qty: pkgUse.extraHours, rate: pkgUse.pkg.rate }] : [])]
+      : [{ desc: `Studio session – ${kindLabel}, ${hrs(p.roundedHours)} (${when})`, qty: 1, rate: p.subtotal }];
+    const invoiceDraft: InvoiceDraft = {
+      date: endTime, client: { name: session.name, phone: session.phone, address: '', email: '' },
+      items, discount: p.discountAmount, advance: 0, method: payload.paymentMethod, status: 'paid', notes: '',
+    };
+    setLastInvoice(invoiceDraft);
+    api<{ invoice: Invoice }>('invoice-session', { startedAt: session.startTime, endedAt: endTime, invoice: invoiceDraft })
+      .then(r => { if (r.ok && r.invoice) setLastInvoice(r.invoice); })
+      .catch(() => {});
+
     try {
       await saveSession(payload);
       localStorage.removeItem('studio_pending_save');
@@ -311,7 +330,7 @@ export default function App() {
     setElapsed(0);
     setDiscountPct(0);
     setLastPricing(null);
-    setPkgUse(null); setPkgOffer(null); setPkgError('');
+    setPkgUse(null); setPkgOffer(null); setPkgError(''); setLastInvoice(null);
     setWarningDismissed(false);
     setIsCommercial(false);
     setIsPaused(false);
@@ -321,6 +340,12 @@ export default function App() {
   };
 
   const downloadInvoice = () => {
+    if (lastInvoice) { downloadInvoicePdf(lastInvoice).catch(() => downloadInvoiceImage()); return; }
+    downloadInvoiceImage();
+  };
+
+  // Older picture invoice, kept as a fallback if the PDF cannot be built.
+  const downloadInvoiceImage = () => {
     const W = 800, H = 1050, sc = 2;
     const cv = document.createElement('canvas');
     cv.width = W * sc; cv.height = H * sc;
