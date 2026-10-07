@@ -28,6 +28,7 @@ const NAV = [
   { to: '/equipment', label: 'Equipment' },
   { to: '/rules', label: 'Rules' },
   { to: '/packages', label: 'Packages' },
+  { to: '/my-hours', label: 'My Hours' },
   { to: '/book', label: 'Book' },
   { to: '/collab', label: 'Collab' },
 ];
@@ -35,7 +36,7 @@ const NAV = [
 export function TopBar() {
   const [open, setOpen] = useState(false);
   const link = ({ isActive }: { isActive: boolean }) =>
-    cn('px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all',
+    cn('px-2.5 xl:px-3 py-2 rounded-xl whitespace-nowrap text-[10px] font-black uppercase tracking-widest transition-all',
       isActive ? 'bg-[#C4956A] text-black' : 'text-white/45 hover:text-white');
   const wa = waLink('Hi Studio Alora, I would like to book the studio.');
   return (
@@ -78,6 +79,7 @@ export function PageShell({ title, kicker, wide, children }: { title: string; ki
           <p className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase">{kicker}</p>
         </div>
         {children}
+        <p className="text-center pt-6"><Link to="/staff" className="text-[10px] font-bold uppercase tracking-widest text-white/20 hover:text-white/50">Staff</Link></p>
       </main>
     </div>
   );

@@ -457,6 +457,10 @@ export default function App() {
                   className="block w-full text-center text-white/30 hover:text-[#C4956A] transition-colors uppercase font-bold text-[10px] tracking-widest pt-2">
                   Price Calculator
                 </Link>
+                <Link to="/staff"
+                  className="block w-full text-center text-white/15 hover:text-white/40 transition-colors uppercase font-bold text-[10px] tracking-widest">
+                  Staff
+                </Link>
               </form>
             </motion.div>
           )}
