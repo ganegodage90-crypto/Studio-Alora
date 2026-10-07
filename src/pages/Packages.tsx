@@ -23,14 +23,13 @@ const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000
 export default function Packages() {
   const [kind, setKind] = useState<SessionKind>('nonCommercial');
   const [pkgId, setPkgId] = useState<string>('20');
-  const [openHours, setOpenHours] = useState(30);
   const [f, setF] = useState({ name: '', phone: '', start: '', schedule: '' });
   const [agree, setAgree] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF(p => ({ ...p, [k]: e.target.value }));
 
   const pkg = PACKAGES.find(p => p.id === pkgId)!;
-  const hours = pkg.open ? Math.max(30, Math.round(openHours) || 30) : pkg.hours;
+  const hours = pkg.hours;
   const rate = pkg.rate[kind];
   const total = hours * rate;
   const standard = RATES[kind].perHour;
@@ -73,11 +72,21 @@ export default function Packages() {
                 <span className={cn('w-6 h-6 rounded-full border flex items-center justify-center', active ? 'bg-[#C4956A] border-[#C4956A] text-black' : 'border-white/20 text-transparent')}><Check size={14} strokeWidth={3} /></span>
               </div>
               <p className="text-3xl font-black italic tabular-nums text-[#C4956A]">{lkr(r)}<span className="text-sm font-bold not-italic text-white/40"> /hr</span></p>
-              <p className="text-sm font-bold text-white/70">{p.open ? 'From ' : ''}{lkr(p.hours * r)}{p.open ? '' : ' total'}</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Save {lkr((standard - r) * p.hours)}{p.open ? ' or more' : ''} vs hourly</p>
+              <p className="text-sm font-bold text-white/70">{lkr(p.hours * r)} total</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/35">Save {lkr((standard - r) * p.hours)} vs hourly</p>
             </button>
           );
         })}
+      </div>
+      <div className={`${glass} p-5 sm:p-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left`}>
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-widest text-[#F0EDE8]">Need more than 30 hours?</p>
+          <p className="text-sm text-white/50 mt-1">Talk to us and we will set a custom rate for your month.</p>
+        </div>
+        <a href={waLink(`Hi Studio Alora, I need more than 30 hours a month (${RATES[kind].label}). Can we discuss a custom rate?`)} target="_blank" rel="noreferrer"
+          className="shrink-0 flex items-center gap-2 px-5 py-3 rounded-2xl border border-[#C4956A]/40 text-[#C4956A] hover:bg-[#C4956A] hover:text-black text-[11px] font-black uppercase tracking-widest transition-all">
+          <MessageCircle size={15} /> Ask on WhatsApp
+        </a>
       </div>
       <p className="text-center text-[10px] text-white/30 uppercase tracking-wider">{RATES[kind].note} · Savings compared with the standard {lkr(standard)}/hr rate</p>
 
@@ -112,11 +121,6 @@ export default function Packages() {
                 <span className="text-3xl font-black italic tabular-nums text-[#C4956A] whitespace-nowrap ml-auto">{lkr(total)}</span>
               </div>
             </div>
-            {pkg.open && (
-              <div className="space-y-1.5"><label htmlFor="p-hours" className={label}>Hours This Month (30 or more)</label>
-                <input id="p-hours" type="number" min={30} max={300} inputMode="numeric" className={field} value={openHours}
-                  onChange={e => setOpenHours(Number(e.target.value))} /></div>
-            )}
             <div className="space-y-1.5"><label htmlFor="p-name" className={label}>Name or Brand</label>
               <input id="p-name" required autoComplete="name" className={field} value={f.name} onChange={set('name')} /></div>
             <div className="space-y-1.5"><label htmlFor="p-phone" className={label}>Phone / WhatsApp</label>
