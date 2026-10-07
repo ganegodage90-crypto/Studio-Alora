@@ -15,5 +15,15 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow read, update, delete: if false;
     }
+
+    // Booking requests and collaboration applications sent from the website.
+    match /requests/{requestId} {
+      allow create: if
+        request.resource.data.kind in ['booking', 'collab']
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() < 200
+        && request.resource.data.phone is string && request.resource.data.phone.size() > 0 && request.resource.data.phone.size() < 40
+        && request.resource.data.createdAt == request.time;
+      allow read, update, delete: if false;
+    }
   }
 }
