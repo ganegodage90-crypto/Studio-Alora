@@ -96,7 +96,8 @@ export default function App() {
   const [pauseStartTime, setPauseStartTime] = useState<number | null>(null);
   const [showPausePin, setShowPausePin] = useState(false);
   const [pausePinInput, setPausePinInput] = useState('');
-  const [pausePinError, setPausePinError] = useState(false);
+  const [pausePinError, setPausePinError] = useState('');
+  const [pinChecking, setPinChecking] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
   const handleCopy = (text: string, field: string) => {
@@ -206,9 +207,24 @@ export default function App() {
     setIsPaused(false);
   };
 
-  const handlePausePin = () => {
-    if (pausePinInput === '9025') {
-      setPausePinError(false);
+  const handlePausePin = async () => {
+    if (pinChecking || pausePinInput.length < 4) return;
+    setPinChecking(true);
+    let ok = false;
+    try {
+      const r = await fetch('/api/verify-pin', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: pausePinInput }),
+      });
+      if (r.status !== 200) throw new Error(String(r.status));
+      ok = (await r.json()).ok === true;
+    } catch {
+      setPinChecking(false);
+      setPausePinError('Could not check the PIN. Check the connection and try again.');
+      return;
+    }
+    setPinChecking(false);
+    if (ok) {
+      setPausePinError('');
       setPausePinInput('');
       setShowPausePin(false);
       if (isPaused && pauseStartTime) {
@@ -220,7 +236,7 @@ export default function App() {
         setIsPaused(true);
       }
     } else {
-      setPausePinError(true);
+      setPausePinError('Incorrect PIN');
       setPausePinInput('');
     }
   };
@@ -523,7 +539,7 @@ export default function App() {
                 <div className="h-px bg-gradient-to-r from-transparent via-[#C4956A]/20 to-transparent" />
 
                 <div className="flex flex-col gap-3 max-w-sm mx-auto">
-                  <button onClick={() => { setPausePinInput(''); setPausePinError(false); setShowPausePin(true); }}
+                  <button onClick={() => { setPausePinInput(''); setPausePinError(''); setShowPausePin(true); }}
                     className={cn(
                       'w-full font-black py-4 rounded-2xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all uppercase tracking-widest text-sm border',
                       isPaused
@@ -893,20 +909,20 @@ export default function App() {
                   placeholder="Enter 4-digit PIN"
                   autoFocus
                   value={pausePinInput}
-                  onChange={e => { setPausePinInput(e.target.value.replace(/\D/g, '').slice(0, 4)); setPausePinError(false); }}
+                  onChange={e => { setPausePinInput(e.target.value.replace(/\D/g, '').slice(0, 4)); setPausePinError(''); }}
                   onKeyDown={e => e.key === 'Enter' && handlePausePin()}
                   className="w-full bg-white/[0.06] border border-white/[0.10] rounded-2xl py-4 px-5 text-center text-2xl font-black tracking-[0.5em] focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all"
                 />
-                {pausePinError && <p className="text-red-400 text-xs font-black uppercase tracking-widest text-center">Incorrect PIN</p>}
+                {pausePinError && <p className="text-red-400 text-xs font-black uppercase tracking-widest text-center">{pausePinError}</p>}
               </div>
               <div className="flex gap-3">
-                <button onClick={() => { setShowPausePin(false); setPausePinInput(''); setPausePinError(false); }}
+                <button onClick={() => { setShowPausePin(false); setPausePinInput(''); setPausePinError(''); }}
                   className="flex-1 bg-white/[0.04] text-white/40 font-bold py-3 rounded-2xl uppercase tracking-widest text-[10px] hover:bg-white/[0.08] transition-colors">
                   Cancel
                 </button>
-                <button onClick={handlePausePin}
-                  className="flex-1 bg-[#C4956A] text-black font-black py-3 rounded-2xl uppercase tracking-tighter hover:scale-[1.02] active:scale-[0.98] transition-transform">
-                  {isPaused ? 'Resume' : 'Pause'}
+                <button onClick={handlePausePin} disabled={pinChecking}
+                  className="flex-1 disabled:opacity-50 bg-[#C4956A] text-black font-black py-3 rounded-2xl uppercase tracking-tighter hover:scale-[1.02] active:scale-[0.98] transition-transform">
+                  {pinChecking ? 'Checking…' : isPaused ? 'Resume' : 'Pause'}
                 </button>
               </div>
             </motion.div>
