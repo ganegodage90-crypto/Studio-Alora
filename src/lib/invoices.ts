@@ -1,6 +1,10 @@
 import { STUDIO_NAME, ADDRESS, HOTLINE, EMAIL, BANK, SITE_HOST } from './site';
 
-export interface InvoiceItem { desc: string; qty: number; rate: number }
+/** `rate` is what the client pays per unit. `std` is the standard rate, set only on a discounted line. */
+export interface InvoiceItem { desc: string; qty: number; rate: number; std?: number }
+export const rate2 = (v: number) => Math.round(v * 100) / 100;
+/** Rates are shown exactly, with up to 2 decimals. */
+export const rateStr = (v: number) => v.toLocaleString('en-US', { maximumFractionDigits: 2 });
 export interface InvoiceDraft {
   id?: string; number?: string; date: number;
   client: { name: string; phone: string; address: string; email: string };
@@ -16,9 +20,11 @@ export const emptyInvoice = (): InvoiceDraft => ({
 
 export function totals(inv: InvoiceDraft) {
   const subtotal = inv.items.reduce((s, i) => s + Math.round(i.qty * i.rate), 0);
+  const standard = inv.items.reduce((s, i) => s + Math.round(i.qty * (i.std && i.std > i.rate ? i.std : i.rate)), 0);
+  const saving = standard - subtotal;
   const total = Math.max(0, subtotal - inv.discount);
   const balance = inv.status === 'paid' ? 0 : Math.max(0, total - inv.advance);
-  return { subtotal, total, balance };
+  return { subtotal, standard, saving, total, balance };
 }
 
 const n = (v: number) => v.toLocaleString('en-US');
@@ -62,18 +68,26 @@ export async function downloadInvoicePdf(inv: InvoiceDraft) {
   y += 14 + Math.max(from.length, to.length) * 4.8 + 6;
 
   // Items
-  const cQty = 128, cRate = 160;
+  const twoRates = inv.items.some(i => i.std && i.std > i.rate);
+  const cQty = twoRates ? 104 : 128, cStd = 132, cRate = 160, descW = twoRates ? 70 : 92;
   doc.setFillColor(...ink); doc.rect(M, y, R - M, 8, 'F');
   const head = (s: string, x: number, align: 'left' | 'right' = 'left') => text(s, x, y + 5.3, { size: 7.5, bold: true, color: [255, 255, 255], align });
-  head('DESCRIPTION', M + 3); head('QTY / HRS', cQty, 'right'); head('RATE (LKR)', cRate, 'right'); head('AMOUNT (LKR)', R - 3, 'right');
+  head('DESCRIPTION', M + 3); head('QTY / HRS', cQty, 'right');
+  if (twoRates) { head('STANDARD RATE', cStd, 'right'); head('YOUR RATE', cRate, 'right'); } else head('RATE (LKR)', cRate, 'right');
+  head('AMOUNT (LKR)', R - 3, 'right');
   y += 8;
   for (const it of inv.items) {
-    const lines = doc.splitTextToSize(it.desc, 92) as string[];
+    const lines = doc.splitTextToSize(it.desc, descW) as string[];
     const h = Math.max(9, lines.length * 4.6 + 4.4);
     if (y + h > 250) { doc.addPage(); y = 20; }
     lines.forEach((l, i) => text(l, M + 3, y + 6 + i * 4.6, { size: 9.5 }));
     text(String(it.qty), cQty, y + 6, { size: 9.5, align: 'right' });
-    text(n(it.rate), cRate, y + 6, { size: 9.5, align: 'right' });
+    const disc = Boolean(it.std && it.std > it.rate);
+    if (twoRates) {
+      text(rateStr(disc ? it.std! : it.rate), cStd, y + 6, { size: 9.5, color: disc ? grey : ink, align: 'right' });
+      if (disc) { const w = doc.getTextWidth(rateStr(it.std!)); doc.setDrawColor(...grey); doc.setLineWidth(0.25); doc.line(cStd - w, y + 5, cStd, y + 5); }
+      text(disc ? rateStr(it.rate) : '', cRate, y + 6, { size: 9.5, bold: true, color: gold, align: 'right' });
+    } else text(rateStr(it.rate), cRate, y + 6, { size: 9.5, align: 'right' });
     text(n(Math.round(it.qty * it.rate)), R - 3, y + 6, { size: 9.5, bold: true, align: 'right' });
     y += h; rule(y);
   }
@@ -81,10 +95,11 @@ export async function downloadInvoicePdf(inv: InvoiceDraft) {
   // Totals
   if (y > 215) { doc.addPage(); y = 20; }
   y += 12;
-  const row = (l: string, v: string, bold = false) => { text(l, 122, y, { size: 9.5, color: bold ? ink : grey, bold }); text(v, R - 3, y, { size: 9.5, bold, align: 'right' }); y += 6.2; };
+  const row = (l: string, v: string, bold = false) => { text(l, 120, y, { size: 9.5, color: bold ? ink : grey, bold }); text(v, R - 3, y, { size: 9.5, bold, align: 'right' }); y += 6.2; };
   const top = y;
-  row('Subtotal', `${n(t.subtotal)} LKR`);
-  if (inv.discount > 0) row('Discount', `- ${n(inv.discount)} LKR`);
+  if (t.saving > 0) { row('Total at standard rates', `${n(t.standard)} LKR`); row('You save', `- ${n(t.saving)} LKR`, true); }
+  else row('Subtotal', `${n(t.subtotal)} LKR`);
+  if (inv.discount > 0) row(t.saving > 0 ? 'Additional discount' : 'Discount', `- ${n(inv.discount)} LKR`);
   row('Total', `${n(t.total)} LKR`, true);
   if (inv.status !== 'paid' && inv.advance > 0) row('Advance paid', `- ${n(inv.advance)} LKR`);
   y += 1;

@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { saveSession } from './lib/db';
 import { api, PackageView, hrs } from './lib/packages';
-import { Invoice, InvoiceDraft, downloadInvoicePdf } from './lib/invoices';
+import { Invoice, InvoiceDraft, downloadInvoicePdf, rate2, rateStr } from './lib/invoices';
 import { Link } from 'react-router-dom';
 import { glass, glassSolid, KindToggle } from './components/Shell';
 import { RATES, SITE_URL, SITE_HOST, HOTLINE, BANK, lkr } from './lib/site';
@@ -275,10 +275,15 @@ export default function App() {
     const items = pkgUse
       ? [{ desc: `Studio session – ${kindLabel}, ${when}. ${hrs(pkgUse.charged)} taken from monthly package (${hrs(pkgUse.pkg.left)} left).`, qty: pkgUse.charged, rate: 0 },
          ...(pkgUse.extraHours > 0 ? [{ desc: 'Hours beyond monthly package, at package rate', qty: pkgUse.extraHours, rate: pkgUse.pkg.rate }] : [])]
-      : [{ desc: `Studio session – ${kindLabel}, ${hrs(p.roundedHours)} (${when})`, qty: 1, rate: p.subtotal }];
+      : [(() => {
+          // Shown per hour: the standard rate and, when a discount was given, the lower rate actually charged.
+          const billHours = p.roundedHours <= 1 ? 1 : p.roundedHours;
+          const std = rate2(p.subtotal / billHours), charged = rate2(p.finalTotal / billHours);
+          return { desc: `Studio session – ${kindLabel} (${when})`, qty: billHours, rate: charged, ...(charged < std ? { std } : {}) };
+        })()];
     const invoiceDraft: InvoiceDraft = {
       date: endTime, client: { name: session.name, phone: session.phone, address: '', email: '' },
-      items, discount: p.discountAmount, advance: 0, method: payload.paymentMethod, status: 'paid', notes: '',
+      items, discount: pkgUse ? p.discountAmount : 0, advance: 0, method: payload.paymentMethod, status: 'paid', notes: '',
     };
     setLastInvoice(invoiceDraft);
     api<{ invoice: Invoice }>('invoice-session', { startedAt: session.startTime, endedAt: endTime, invoice: invoiceDraft })
@@ -632,6 +637,15 @@ export default function App() {
                     <span className="text-xs text-red-400 font-bold shrink-0">-{pricing.discountAmount.toLocaleString()} LKR</span>
                   )}
                 </div>
+                {discountPct > 0 && !pkgUse && pricing.subtotal > 0 && (() => {
+                  const h = pricing.roundedHours <= 1 ? 1 : pricing.roundedHours;
+                  return (
+                    <div className="flex justify-between items-center">
+                      <span className="text-white/35 font-bold uppercase text-xs">Your Hourly Rate</span>
+                      <span className="text-sm font-black tabular-nums"><s className="text-white/35 font-bold">{rateStr(rate2(pricing.subtotal / h))}</s> <span className="text-[#C4956A]">{rateStr(rate2(pricing.finalTotal / h))} LKR/HR</span></span>
+                    </div>
+                  );
+                })()}
 
                 <div className="flex justify-between items-center pt-4 mt-4 border-t-2 border-[#C4956A]/25">
                   <span className="text-black bg-[#C4956A] px-2 py-0.5 rounded font-black uppercase text-[10px] tracking-widest">Total Due</span>
