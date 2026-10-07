@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Download, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
 import { glass, field, label, primaryBtn, ghostBtn } from './Shell';
 import { api } from '../lib/packages';
-import { Invoice, InvoiceDraft, emptyInvoice, totals, downloadInvoicePdf } from '../lib/invoices';
+import { Invoice, InvoiceDraft, InvoiceItem, emptyInvoice, totals, downloadInvoicePdf, rate2, rateStr } from '../lib/invoices';
 import { RATES, PACKAGES, lkr } from '../lib/site';
 import { cn } from '../lib/utils';
 
@@ -18,6 +18,12 @@ const PRESETS: { label: string; item: { desc: string; qty: number; rate: number 
   { label: 'Pet fee', item: { desc: 'Pet fee (per pet)', qty: 1, rate: 4500 } },
   { label: 'Cleaning fee', item: { desc: 'Cleaning fee', qty: 1, rate: 2500 } },
 ];
+
+/** The standard (undiscounted) rate of a line. */
+const stdOf = (it: InvoiceItem) => it.std ?? it.rate;
+/** Line pricing from a standard rate and an optional lower, discounted rate. */
+const priced = (std: number, disc: number | null): Pick<InvoiceItem, 'rate' | 'std'> =>
+  disc !== null && disc < std ? { rate: disc, std } : { rate: std, std: undefined };
 
 const dateInput = (ms: number) => new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const shortDate = (ms: number) => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -94,13 +100,23 @@ export function StaffInvoices({ pin }: { pin: string }) {
                 <button type="button" aria-label={`Remove line ${i + 1}`} disabled={draft.items.length === 1} onClick={() => set({ items: draft.items.filter((_, j) => j !== i) })}
                   className="shrink-0 w-11 rounded-2xl border border-white/[0.08] text-white/40 hover:text-red-400 disabled:opacity-30 flex items-center justify-center"><Trash2 size={15} /></button>
               </div>
-              <div className="grid grid-cols-3 gap-2 items-end">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 items-end">
                 <div className="space-y-1 min-w-0"><label htmlFor={`i-q${i}`} className={label}>Qty / Hrs</label>
                   <input id={`i-q${i}`} type="number" min={0} step={0.5} className={`${field} py-3`} value={it.qty} onChange={e => setItem(i, { qty: Number(e.target.value) })} /></div>
-                <div className="space-y-1 min-w-0"><label htmlFor={`i-r${i}`} className={label}>Rate</label>
-                  <input id={`i-r${i}`} type="number" min={0} className={`${field} py-3`} value={it.rate || ''} onChange={e => setItem(i, { rate: Number(e.target.value) })} /></div>
-                <p className="text-right text-sm font-black tabular-nums text-[#C4956A] pb-3">{lkr(Math.round(it.qty * it.rate))}</p>
+                <div className="space-y-1 min-w-0"><label htmlFor={`i-r${i}`} className={label}>Standard Rate</label>
+                  <input id={`i-r${i}`} type="number" min={0} step="any" className={`${field} py-3`} value={stdOf(it) || ''} onChange={e => setItem(i, priced(Number(e.target.value), it.std ? it.rate : null))} /></div>
+                <div className="space-y-1 min-w-0"><label htmlFor={`i-d${i}`} className={label}>Discounted Rate</label>
+                  <input id={`i-d${i}`} type="number" min={0} step="any" placeholder="None" className={`${field} py-3`} value={it.std ? it.rate : ''}
+                    onChange={e => setItem(i, priced(stdOf(it), e.target.value === '' ? null : Number(e.target.value)))} /></div>
+                <div className="space-y-1 min-w-0"><label htmlFor={`i-p${i}`} className={label}>Or % Off</label>
+                  <input id={`i-p${i}`} type="number" min={0} max={100} step="any" placeholder="0" className={`${field} py-3`}
+                    value={it.std ? rate2((1 - it.rate / it.std) * 100) : ''}
+                    onChange={e => { const pct = Math.min(100, Math.max(0, Number(e.target.value))); setItem(i, priced(stdOf(it), pct > 0 ? rate2(stdOf(it) * (1 - pct / 100)) : null)); }} /></div>
               </div>
+              <p className="text-right text-sm font-black tabular-nums text-[#C4956A]">
+                {it.std ? <span className="text-xs font-bold text-white/40 mr-2"><s>{rateStr(it.std)}</s> → {rateStr(it.rate)} /hr</span> : null}
+                {lkr(Math.round(it.qty * it.rate))}
+              </p>
             </div>
           ))}
           <div className="flex flex-wrap gap-2">
@@ -113,7 +129,7 @@ export function StaffInvoices({ pin }: { pin: string }) {
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3">
-          <div className="space-y-1.5 min-w-0"><label htmlFor="i-disc" className={label}>Discount (LKR)</label>
+          <div className="space-y-1.5 min-w-0"><label htmlFor="i-disc" className={label}>Additional Discount (LKR)</label>
             <input id="i-disc" type="number" min={0} className={field} value={draft.discount || ''} onChange={e => set({ discount: Number(e.target.value) })} /></div>
           <div className="space-y-1.5 min-w-0"><label htmlFor="i-adv" className={label}>Advance Already Paid (LKR)</label>
             <input id="i-adv" type="number" min={0} className={field} value={draft.advance || ''} onChange={e => set({ advance: Number(e.target.value) })} /></div>
@@ -129,7 +145,11 @@ export function StaffInvoices({ pin }: { pin: string }) {
         </div>
 
         <div className="bg-white/[0.04] border border-[#C4956A]/10 p-5 rounded-2xl space-y-2">
-          <div className="flex justify-between text-xs font-bold text-white/40 uppercase"><span>Subtotal</span><span>{lkr(t.subtotal)}</span></div>
+          {t.saving > 0 ? <>
+            <div className="flex justify-between text-xs font-bold text-white/40 uppercase"><span>At standard rates</span><span>{lkr(t.standard)}</span></div>
+            <div className="flex justify-between text-xs font-bold uppercase text-[#C4956A]"><span>Client saves</span><span>− {lkr(t.saving)}</span></div>
+          </> : <div className="flex justify-between text-xs font-bold text-white/40 uppercase"><span>Subtotal</span><span>{lkr(t.subtotal)}</span></div>}
+          {draft.discount > 0 && <div className="flex justify-between text-xs font-bold text-white/40 uppercase"><span>{t.saving > 0 ? 'Additional discount' : 'Discount'}</span><span>− {lkr(draft.discount)}</span></div>}
           <div className="flex justify-between text-xs font-bold text-white/40 uppercase"><span>Total</span><span className="text-[#F0EDE8]">{lkr(t.total)}</span></div>
           <div className="pt-2 border-t border-[#C4956A]/10 flex justify-between items-center">
             <span className="text-black bg-[#C4956A] px-2 py-0.5 rounded font-black uppercase text-[10px] tracking-widest">{draft.status === 'paid' ? 'Paid in full' : 'Balance due'}</span>

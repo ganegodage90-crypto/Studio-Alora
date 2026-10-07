@@ -101,11 +101,17 @@ export async function nextInvoiceNumber() {
 
 const text = (v, max) => String(v ?? '').trim().slice(0, max);
 const money = v => { const n = Math.round(Number(v)); return Number.isFinite(n) && n >= 0 && n < 1e9 ? n : 0; };
+/** A rate in LKR, kept exact to 2 decimals. */
+const rate2 = v => { const n = Math.round(Number(v) * 100) / 100; return Number.isFinite(n) && n >= 0 && n < 1e9 ? n : 0; };
 /** Keep only known fields, with sane sizes, from whatever the browser sent. */
 export function cleanInvoice(b) {
   const c = b.client || {};
   const items = (Array.isArray(b.items) ? b.items : []).slice(0, 30)
-    .map(i => ({ desc: text(i.desc, 200), qty: Math.max(0, Math.min(1000, Number(i.qty) || 0)), rate: money(i.rate) }))
+    .map(i => {
+      const rate = rate2(i.rate), std = rate2(i.std);
+      // "std" is the standard rate, kept only when the charged rate is lower (a discounted line).
+      return { desc: text(i.desc, 200), qty: Math.max(0, Math.min(1000, Number(i.qty) || 0)), rate, ...(std > rate ? { std } : {}) };
+    })
     .filter(i => i.desc);
   return {
     date: Number(b.date) > 0 ? Number(b.date) : Date.now(),
