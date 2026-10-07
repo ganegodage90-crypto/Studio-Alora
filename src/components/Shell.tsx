@@ -7,6 +7,8 @@ import { waLink, RATES, PAX_RULE, SessionKind } from '../lib/site';
 // Solid translucent card: no backdrop blur, which is very slow on phones.
 export const glass = 'bg-[#1b1510]/85 border border-[#C4956A]/15 rounded-3xl shadow-[0_0_60px_rgba(196,149,106,0.06)]';
 export const josefin: React.CSSProperties = { fontFamily: "'Josefin Sans', sans-serif", fontWeight: 100, letterSpacing: '0.25em' };
+// Fully opaque card for pop-ups, so the page behind never shows through the text.
+export const glassSolid = 'bg-[#1b1510] border border-[#C4956A]/20 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.6)]';
 export const field = 'w-full min-w-0 bg-white/[0.06] border border-white/[0.08] rounded-2xl py-4 px-4 focus:outline-none focus:border-[#C4956A] focus:ring-1 focus:ring-[#C4956A]/40 transition-all font-medium placeholder:text-white/20 text-[#F0EDE8] [color-scheme:dark]';
 export const label = 'text-[10px] font-black uppercase tracking-widest text-white/35 ml-1';
 export const primaryBtn = 'w-full bg-[#C4956A] text-black font-black py-5 rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-transform uppercase tracking-tighter text-base sm:text-lg px-4 text-center disabled:opacity-40 disabled:hover:scale-100';

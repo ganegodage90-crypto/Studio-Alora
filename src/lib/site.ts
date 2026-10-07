@@ -26,8 +26,8 @@ export const PAX_RULE = 'Your rate depends on how many people attend, including 
 
 export const SITE_URL = 'https://www.studioalora.online';
 export const SITE_HOST = 'studioalora.online';
-export const HOTLINE = '070 277 2774';
-export const WHATSAPP_DISPLAY = '076 912 3653';
+export const HOTLINE = '076 9 123 653';
+export const WHATSAPP_DISPLAY = '076 9 123 653';
 export const WHATSAPP_INTL = '94769123653';
 export const EMAIL = 'studioalora@gmail.com';
 export const ADDRESS = '136/B, 12th Lane, Saraboomi Residencies, Piliyandala';

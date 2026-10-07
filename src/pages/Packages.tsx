@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { MessageCircle, CheckCircle2, Check } from 'lucide-react';
 import { PageShell, KindToggle, glass, field, label, primaryBtn, ghostBtn } from '../components/Shell';
 import { Section } from '../components/Blocks';
@@ -10,12 +11,14 @@ const CONDITIONS: [string, string][] = [
   ['Paid in full, in advance', 'The package is bought and paid for in full before the first session.'],
   ['Valid for 30 days', 'Hours run for 30 days from your first session. Unused hours expire and are not refunded or carried over.'],
   ['Reserve your dates', 'Share your time frame for the month when you buy, and we reserve the dates. Slots are subject to availability until reserved.'],
+  ['Track your hours', 'Check hours used and hours left at any time on the My Hours page, using the phone number on your package.'],
   ['Extra hours', 'Hours beyond your package are counted and charged at your package hourly rate, payable at the end of that session.'],
   ['Changing a slot', 'A reserved slot can be moved with at least 72 hours notice. Late cancellations and no-shows use up the reserved hours.'],
   ['How hours are counted', 'Minimum session is 1 hour, counted in 30-minute steps. Each hour after 8:00 PM counts as 1.5 hours.'],
+  ['Rest break on long shoots', 'For shoots of 6 hours or more, one rest break of up to 1 hour is available and is not counted. Ask staff to pause the session. All video lights and air conditioning must be switched off during the break.'],
   ['Not transferable', 'A package is for one photographer or brand. Hours cannot be shared, sublet or resold.'],
   ['No refunds once started', 'A package cannot be refunded after its first session.'],
-  ['Studio rules apply', 'All studio rules and rental terms apply to every session, A non-commercial package covers sessions of up to 6 people; larger sessions need a commercial package.'],
+  ['Studio rules apply', 'All studio rules and rental terms apply to every session. A non-commercial package covers sessions of up to 6 people; larger sessions need a commercial package.'],
 ];
 
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -55,6 +58,7 @@ export default function Packages() {
 
   return (
     <PageShell wide title="Monthly Packages" kicker="Buy hours in advance and save">
+      <p className="text-center -mt-2"><Link to="/my-hours" className="text-[11px] font-black uppercase tracking-widest text-[#C4956A] underline underline-offset-4">Already have a package? Check your hours</Link></p>
       <div className="max-w-lg mx-auto w-full">
         <KindToggle value={kind} onChange={setKind} />
       </div>
@@ -100,6 +104,7 @@ export default function Packages() {
               </div>
             ))}
           </dl>
+          <Link to="/rules" className={ghostBtn}>Read The Full Studio Rules</Link>
         </Section>
 
         {sent ? (

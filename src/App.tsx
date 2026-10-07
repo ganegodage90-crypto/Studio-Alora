@@ -23,16 +23,17 @@ import QRCode from 'qrcode';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from './lib/utils';
 import { saveSession } from './lib/db';
+import { api, PackageView, hrs } from './lib/packages';
 import { Link } from 'react-router-dom';
-import { glass, KindToggle } from './components/Shell';
-import { RATES, SITE_URL, SITE_HOST, lkr } from './lib/site';
+import { glass, glassSolid, KindToggle } from './components/Shell';
+import { RATES, SITE_URL, SITE_HOST, HOTLINE, lkr } from './lib/site';
 
 
 const HOURLY_RATE_MIN = RATES.nonCommercial.firstHour;
 const HOURLY_RATE_EXTENDED = RATES.nonCommercial.perHour;
 const COMMERCIAL_RATE_MIN = RATES.commercial.firstHour;
 const COMMERCIAL_RATE_EXTENDED = RATES.commercial.perHour;
-const HELP_PHONE_NUMBER = '070 277 277 4';
+const HELP_PHONE_NUMBER = HOTLINE;
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CQJsMMv_cZxQEAE/review';
 const BANK_DETAILS = { bank: 'Nations Trust Bank', name: 'K K DILSHAN', account: '200560043329' };
 const COCO = '#C4956A';
@@ -93,6 +94,11 @@ export default function App() {
   const [pausePinError, setPausePinError] = useState('');
   const [pinChecking, setPinChecking] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  // Monthly package: set once this session has been charged to the customer's package.
+  const [pkgUse, setPkgUse] = useState<{ pkg: PackageView; charged: number; extraHours: number; extraDue: number } | null>(null);
+  const [pkgOffer, setPkgOffer] = useState<PackageView | null>(null);
+  const [pkgBusy, setPkgBusy] = useState(false);
+  const [pkgError, setPkgError] = useState('');
 
   const handleCopy = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -153,6 +159,8 @@ export default function App() {
       const wholeHours = Math.floor(roundedHours);
       subtotal = wholeHours * baseExt + (roundedHours % 1 !== 0 ? 3500 : 0);
     }
+    // Charged to a monthly package: only hours beyond the package are payable.
+    if (pkgUse) subtotal = pkgUse.extraDue;
     const discountAmount = Math.round(subtotal * (discountPct / 100));
     const finalTotal = Math.max(0, subtotal - discountAmount);
     return { roundedHours, subtotal, discountAmount, finalTotal };
@@ -168,7 +176,7 @@ export default function App() {
   }
 
   const durationMs = view === 'SUMMARY' && session.endTime && session.startTime
-    ? session.endTime - session.startTime : elapsed;
+    ? session.endTime - session.startTime - totalPausedMs : elapsed;
   const t = formatTime(durationMs);
   const pricing = calculateTotal(durationMs);
 
@@ -235,12 +243,13 @@ export default function App() {
     }
   };
 
-  const handlePayment = async (method: 'online' | 'cash') => {
+  const handlePayment = async (method: 'online' | 'cash' | 'package') => {
+    const methodLabel = method === 'online' ? 'Bank Transfer' : method === 'package' ? 'Monthly Package' : pkgUse ? 'Monthly Package + Cash' : 'Cash';
     const endTime = session.endTime || Date.now();
-    const ms = endTime - (session.startTime || 0);
+    const ms = endTime - (session.startTime || 0) - totalPausedMs;
     const p = calculateTotal(ms);
     setLastPricing(p);
-    setLastPayMethod(method === 'online' ? 'Bank Transfer' : 'Cash');
+    setLastPayMethod(method === 'online' && pkgUse ? 'Monthly Package + Bank Transfer' : methodLabel);
     setIsSaving(true);
     setPaymentModal(null);
 
@@ -252,7 +261,7 @@ export default function App() {
       name: session.name,
       phone: session.phone,
       sessionType: isCommercial ? 'Commercial' : 'Non-Commercial',
-      paymentMethod: method === 'online' ? 'Bank Transfer' : 'Cash',
+      paymentMethod: method === 'online' && pkgUse ? 'Monthly Package + Bank Transfer' : methodLabel,
       startedAt: session.startTime ? new Date(session.startTime).toLocaleString() : '',
       duration: `${h}h ${m}m`,
       amount: p.finalTotal,
@@ -269,12 +278,40 @@ export default function App() {
     setShowGreeting(true);
   };
 
+  // When a session ends, check whether this phone number has a monthly package.
+  useEffect(() => {
+    if (view !== 'SUMMARY' || pkgUse || !session.phone) return;
+    let live = true;
+    api<{ package: PackageView | null }>('package-lookup', { phone: session.phone })
+      .then(r => { if (live && r.ok && r.package && !r.package.expired) setPkgOffer(r.package); })
+      .catch(() => {});
+    return () => { live = false; };
+  }, [view, session.phone, pkgUse]);
+
+  const applyPackage = async () => {
+    if (!session.startTime || !session.endTime) return;
+    setPkgBusy(true); setPkgError('');
+    try {
+      const r = await api<{ package: PackageView | null; charged: number; extraHours: number; extraDue: number }>('package-use', {
+        phone: session.phone, startedAt: session.startTime, endedAt: session.endTime,
+        durationMs: session.endTime - session.startTime - totalPausedMs,
+      });
+      if (!r.ok || !r.package) throw new Error(r.error);
+      setDiscountPct(0);
+      setPkgUse({ pkg: r.package, charged: r.charged, extraHours: r.extraHours, extraDue: r.extraDue });
+    } catch {
+      setPkgError('Could not charge the package. Check the connection, or take payment and tell staff.');
+    }
+    setPkgBusy(false);
+  };
+
   const handleReset = () => {
     setSession(DEFAULT_SESSION);
     setView('IDLE');
     setElapsed(0);
     setDiscountPct(0);
     setLastPricing(null);
+    setPkgUse(null); setPkgOffer(null); setPkgError('');
     setWarningDismissed(false);
     setIsCommercial(false);
     setIsPaused(false);
@@ -573,7 +610,33 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Monthly package */}
+              {pkgOffer && !pkgUse && (
+                <div className="bg-[#C4956A]/10 border border-[#C4956A]/40 rounded-2xl p-4 space-y-3">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#C4956A]">Monthly package found</p>
+                  <p className="text-sm font-bold text-white/80">{pkgOffer.name} has {hrs(pkgOffer.left)} left of {pkgOffer.hours}.</p>
+                  <button onClick={applyPackage} disabled={pkgBusy}
+                    className="w-full bg-[#C4956A] text-black font-black py-4 rounded-2xl flex items-center justify-center gap-2 uppercase tracking-tighter disabled:opacity-50">
+                    {pkgBusy ? <Loader2 size={18} className="animate-spin" /> : null} Use Package Hours
+                  </button>
+                  {pkgError && <p role="alert" className="text-red-400 text-xs font-bold text-center">{pkgError}</p>}
+                </div>
+              )}
+              {pkgUse && (
+                <div className="bg-[#C4956A]/10 border border-[#C4956A]/40 rounded-2xl p-4 space-y-1 text-center">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[#C4956A]">Charged to monthly package</p>
+                  <p className="text-sm font-bold text-white/80">{hrs(pkgUse.charged)} used · {hrs(pkgUse.pkg.left)} left</p>
+                  {pkgUse.extraHours > 0 && <p className="text-xs font-bold text-amber-400">{hrs(pkgUse.extraHours)} over the package, payable now at the package rate.</p>}
+                </div>
+              )}
+
               <div className="space-y-3">
+                {pkgUse && pkgUse.extraDue === 0 ? (
+                  <button onClick={() => handlePayment('package')}
+                    className="w-full bg-[#C4956A] text-black font-black py-4 rounded-2xl flex items-center justify-center uppercase tracking-tighter text-lg">
+                    Finish
+                  </button>
+                ) : (
                 <div className="grid grid-cols-2 gap-3">
                   <button onClick={() => setPaymentModal('online')}
                     className="w-full bg-[#C4956A]/10 border border-[#C4956A]/25 text-[#C4956A] font-black py-4 rounded-2xl flex items-center justify-center hover:bg-[#C4956A]/20 transition-all uppercase tracking-tighter">
@@ -584,6 +647,7 @@ export default function App() {
                     Pay by Cash
                   </button>
                 </div>
+                )}
                 <a href={GOOGLE_REVIEW_URL} target="_blank" rel="noreferrer"
                   className="w-full bg-[#F0EDE8] text-black font-black py-4 rounded-2xl flex items-center justify-center hover:scale-[1.02] active:scale-[0.98] transition-transform uppercase tracking-tighter">
                   Leave a Google Review
@@ -613,7 +677,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6`}>
               <div className="text-center space-y-2">
                 <h3 className="text-2xl font-black tracking-tighter uppercase italic">Bank Transfer</h3>
                 <p className="text-white/40 text-sm font-medium">Transfer the total and tap Transferred when done</p>
@@ -667,7 +731,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.8, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 30 }}
-              className={`${glass} p-10 max-w-sm w-full text-center space-y-6`}>
+              className={`${glassSolid} p-10 max-w-sm w-full text-center space-y-6`}>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
                 className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#C4956A]/10 border border-[#C4956A]/20 text-[#C4956A]">
                 <CheckCircle2 size={48} />
@@ -696,7 +760,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6 text-center`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6 text-center`}>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#C4956A]/10 border border-[#C4956A]/20 text-[#C4956A]">
                 <Phone size={32} />
               </div>
@@ -704,7 +768,7 @@ export default function App() {
                 <h3 className="text-2xl font-black tracking-tighter uppercase italic">Call for Help</h3>
                 <p className="text-white/40 text-sm font-medium">Tap the number below to call the studio manager.</p>
               </div>
-              <a href={`tel:${HELP_PHONE_NUMBER}`}
+              <a href={`tel:${HELP_PHONE_NUMBER.replace(/\s/g, '')}`}
                 className="block w-full bg-[#C4956A] text-black font-black py-4 rounded-2xl text-xl tracking-wide font-mono">
                 {HELP_PHONE_NUMBER}
               </a>
@@ -721,7 +785,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6 text-center`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6 text-center`}>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500">
                 <AlertCircle size={32} />
               </div>
@@ -747,7 +811,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6`}>
               <div className="text-center space-y-2">
                 <h3 className="text-2xl font-black tracking-tighter uppercase italic">Price Calculator</h3>
                 <p className="text-white/40 text-sm font-medium">Verify your rates logic here</p>
@@ -845,7 +909,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/85 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-5`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-5`}>
               <div className="text-center space-y-1">
                 <h3 className="text-xl font-black tracking-tighter uppercase">{isPaused ? 'Resume Session' : 'Pause Session'}</h3>
                 <p className="text-white/40 text-xs font-medium tracking-wide">Enter staff PIN to {isPaused ? 'resume' : 'pause'}</p>
@@ -853,7 +917,7 @@ export default function App() {
               {!isPaused && (
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-center space-y-1">
                   <p className="text-amber-400 text-sm font-black uppercase tracking-wide">⚡ Before Pausing</p>
-                  <p className="text-amber-300/70 text-xs font-medium leading-relaxed">Please turn off the AC and Lights while the session is paused.</p>
+                  <p className="text-amber-300/70 text-xs font-medium leading-relaxed">Breaks are for shoots of 6 hours or more, up to 1 hour. Please turn off all video lights and the AC while the session is paused.</p>
                 </div>
               )}
               <div className="space-y-2">
