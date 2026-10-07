@@ -1,7 +1,7 @@
 // Single source of truth for rates, contacts and site links.
 export const RATES = {
   nonCommercial: { firstHour: 8500, perHour: 6500, halfHour: 3500, label: 'Non-Commercial', note: 'Up to 6 pax · Personal / Creative use' },
-  commercial: { firstHour: 12500, perHour: 9500, halfHour: 3500, label: 'Commercial', note: 'Above 6 pax · Commercial / Advertising use' },
+  commercial: { firstHour: 12400, perHour: 9500, halfHour: 3500, label: 'Commercial', note: 'Above 6 pax · Commercial / Advertising use' },
 } as const;
 
 export type SessionKind = keyof typeof RATES;
