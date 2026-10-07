@@ -12,6 +12,7 @@ const pages = {
   equipment: () => import('./pages/Equipment.tsx'),
   rules: () => import('./pages/Rules.tsx'),
   packages: () => import('./pages/Packages.tsx'),
+  myPackage: () => import('./pages/MyPackage.tsx'),
   collab: () => import('./pages/Collab.tsx'),
 };
 const Book = lazy(pages.book);
@@ -20,6 +21,8 @@ const Gallery = lazy(pages.gallery);
 const Equipment = lazy(pages.equipment);
 const Rules = lazy(pages.rules);
 const Packages = lazy(pages.packages);
+const MyPackage = lazy(pages.myPackage);
+const Staff = lazy(() => import('./pages/Staff.tsx'));
 const Collab = lazy(pages.collab);
 
 // Download the other pages in the background so menu taps open instantly.
@@ -40,6 +43,8 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/equipment" element={<Equipment />} />
           <Route path="/rules" element={<Rules />} />
           <Route path="/packages" element={<Packages />} />
+          <Route path="/my-hours" element={<MyPackage />} />
+          <Route path="/staff" element={<Staff />} />
           <Route path="/studio" element={<Navigate to="/gallery" replace />} />
           <Route path="/collab" element={<Collab />} />
           <Route path="*" element={<Navigate to="/" replace />} />
