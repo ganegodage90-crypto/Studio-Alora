@@ -32,3 +32,9 @@ Pushing to `main` deploys to production on Vercel. Other branches get a preview 
 - `/staff`: staff (PIN) create packages, adjust used hours and delete packages.
 - At the end of a check-in session, a phone number with an active package gets a "Use Package Hours" button.
 - Data lives in an Upstash Redis database connected to the Vercel project (Storage tab). The functions in `api/` read `KV_REST_API_URL` and `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`), which the integration adds automatically.
+
+## Invoices
+
+- `/staff` → Invoices: create, edit, mark paid or unpaid, and download invoices as A4 PDFs. Numbers run SA-0001, SA-0002, … and are never reused.
+- Every paid check-in session stores an invoice automatically (`api/invoice-session.js`); the customer's Download Invoice button gives the same PDF.
+- Studio and bank details printed on invoices are in `src/lib/site.ts`. The PDF layout is in `src/lib/invoices.ts`.
