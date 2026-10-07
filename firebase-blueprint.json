@@ -1,0 +1,33 @@
+{
+  "entities": {
+    "Session": {
+      "title": "Studio Session",
+      "description": "Records of studio rental sessions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Customer name" },
+        "phone": { "type": "string", "description": "Customer phone number" },
+        "brand": { "type": "string", "description": "Brand name" },
+        "startTime": { "type": "number", "description": "Start time in ms" },
+        "startTimeString": { "type": "string", "description": "Readable start time" },
+        "endTime": { "type": "number", "description": "End time in ms" },
+        "endTimeString": { "type": "string", "description": "Readable end time" },
+        "dateString": { "type": "string", "description": "Human readable date" },
+        "durationMs": { "type": "number", "description": "Total duration in ms" },
+        "hours": { "type": "number", "description": "Rated hours" },
+        "subtotal": { "type": "number", "description": "Amount before discount" },
+        "discount": { "type": "number", "description": "Discount applied" },
+        "totalAmount": { "type": "number", "description": "Final amount paid" },
+        "notes": { "type": "string", "description": "Session notes" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp" }
+      },
+      "required": ["name", "phone", "startTime", "endTime"]
+    }
+  },
+  "firestore": {
+    "sessions": {
+      "schema": "Session",
+      "description": "Collection of all completed studio sessions"
+    }
+  }
+}
