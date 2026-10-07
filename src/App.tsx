@@ -25,15 +25,15 @@ import { cn } from './lib/utils';
 import { saveSession } from './lib/db';
 import { api, PackageView, hrs } from './lib/packages';
 import { Link } from 'react-router-dom';
-import { glass, KindToggle } from './components/Shell';
-import { RATES, SITE_URL, SITE_HOST, lkr } from './lib/site';
+import { glass, glassSolid, KindToggle } from './components/Shell';
+import { RATES, SITE_URL, SITE_HOST, HOTLINE, lkr } from './lib/site';
 
 
 const HOURLY_RATE_MIN = RATES.nonCommercial.firstHour;
 const HOURLY_RATE_EXTENDED = RATES.nonCommercial.perHour;
 const COMMERCIAL_RATE_MIN = RATES.commercial.firstHour;
 const COMMERCIAL_RATE_EXTENDED = RATES.commercial.perHour;
-const HELP_PHONE_NUMBER = '070 277 277 4';
+const HELP_PHONE_NUMBER = HOTLINE;
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CQJsMMv_cZxQEAE/review';
 const BANK_DETAILS = { bank: 'Nations Trust Bank', name: 'K K DILSHAN', account: '200560043329' };
 const COCO = '#C4956A';
@@ -677,7 +677,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6`}>
               <div className="text-center space-y-2">
                 <h3 className="text-2xl font-black tracking-tighter uppercase italic">Bank Transfer</h3>
                 <p className="text-white/40 text-sm font-medium">Transfer the total and tap Transferred when done</p>
@@ -731,7 +731,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.8, y: 30 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 30 }}
-              className={`${glass} p-10 max-w-sm w-full text-center space-y-6`}>
+              className={`${glassSolid} p-10 max-w-sm w-full text-center space-y-6`}>
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.15, type: 'spring', stiffness: 200 }}
                 className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-[#C4956A]/10 border border-[#C4956A]/20 text-[#C4956A]">
                 <CheckCircle2 size={48} />
@@ -760,7 +760,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6 text-center`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6 text-center`}>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#C4956A]/10 border border-[#C4956A]/20 text-[#C4956A]">
                 <Phone size={32} />
               </div>
@@ -768,7 +768,7 @@ export default function App() {
                 <h3 className="text-2xl font-black tracking-tighter uppercase italic">Call for Help</h3>
                 <p className="text-white/40 text-sm font-medium">Tap the number below to call the studio manager.</p>
               </div>
-              <a href={`tel:${HELP_PHONE_NUMBER}`}
+              <a href={`tel:${HELP_PHONE_NUMBER.replace(/\s/g, '')}`}
                 className="block w-full bg-[#C4956A] text-black font-black py-4 rounded-2xl text-xl tracking-wide font-mono">
                 {HELP_PHONE_NUMBER}
               </a>
@@ -785,7 +785,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6 text-center`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6 text-center`}>
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 text-red-500">
                 <AlertCircle size={32} />
               </div>
@@ -811,7 +811,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-6`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-6`}>
               <div className="text-center space-y-2">
                 <h3 className="text-2xl font-black tracking-tighter uppercase italic">Price Calculator</h3>
                 <p className="text-white/40 text-sm font-medium">Verify your rates logic here</p>
@@ -909,7 +909,7 @@ export default function App() {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/85 z-[100] flex items-center justify-center p-4">
             <motion.div initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 20 }}
-              className={`${glass} p-8 max-w-sm w-full space-y-5`}>
+              className={`${glassSolid} p-8 max-w-sm w-full space-y-5`}>
               <div className="text-center space-y-1">
                 <h3 className="text-xl font-black tracking-tighter uppercase">{isPaused ? 'Resume Session' : 'Pause Session'}</h3>
                 <p className="text-white/40 text-xs font-medium tracking-wide">Enter staff PIN to {isPaused ? 'resume' : 'pause'}</p>
@@ -917,7 +917,7 @@ export default function App() {
               {!isPaused && (
                 <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 text-center space-y-1">
                   <p className="text-amber-400 text-sm font-black uppercase tracking-wide">⚡ Before Pausing</p>
-                  <p className="text-amber-300/70 text-xs font-medium leading-relaxed">Please turn off the AC and Lights while the session is paused.</p>
+                  <p className="text-amber-300/70 text-xs font-medium leading-relaxed">Breaks are for shoots of 6 hours or more, up to 1 hour. Please turn off all video lights and the AC while the session is paused.</p>
                 </div>
               )}
               <div className="space-y-2">

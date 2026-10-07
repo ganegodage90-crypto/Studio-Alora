@@ -13,6 +13,7 @@ const RULES: [string, string][] = [
   ['Arrive on time', 'If you are early, please wait outside until your slot starts. There is no waiting room inside the studio.'],
   ['Leave things as you found them', 'Staff check the room 10 minutes before your booking ends. Return furniture and props and bin all rubbish. A 2,500 LKR fee applies if the room is not ready for the next customer.'],
   ['Capacity', 'Non-commercial sessions: maximum 6 people including photographers and videographers. Breaking the limit can end the session without a refund.'],
+  ['Rest break on long shoots', 'For shoots of 6 hours or more, one rest break of up to 1 hour is available and is not counted. Ask staff to pause the session. All video lights and air conditioning must be switched off during the break.'],
   ['Not soundproof', 'Keep music and noise reasonable, with no explicit content. For video shoots that need quiet, contact us first.'],
   ['Not permitted', 'Adult or pornographic shoots, alcohol, smoking or drugs on the premises, and open flames.'],
   ['Stay within your studio', 'Your booking covers the studio you rented. Ask staff if you would like a tour of other areas.'],
