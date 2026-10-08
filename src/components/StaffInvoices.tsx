@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Download, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
+import { Copy, Download, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
 import { glass, field, label, primaryBtn, ghostBtn } from './Shell';
 import { api } from '../lib/packages';
 import { Invoice, InvoiceDraft, InvoiceItem, emptyInvoice, totals, downloadInvoicePdf, rate2, rateStr } from '../lib/invoices';
@@ -25,6 +25,12 @@ const stdOf = (it: InvoiceItem) => it.std ?? it.rate;
 const priced = (std: number, disc: number | null): Pick<InvoiceItem, 'rate' | 'std'> =>
   disc !== null && disc < std ? { rate: disc, std } : { rate: std, std: undefined };
 
+/** A fresh, unsaved copy for the same client: new number on save, today's date, unpaid, no advance. */
+const duplicateOf = (i: InvoiceDraft): InvoiceDraft => ({
+  date: Date.now(), client: { ...i.client }, items: i.items.map(x => ({ ...x })),
+  discount: i.discount, advance: 0, method: i.method, status: 'unpaid', notes: i.notes,
+});
+
 const dateInput = (ms: number) => new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 const shortDate = (ms: number) => new Date(ms).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 const ERR: Record<string, string> = { bad_input: 'Add the client name and at least one line with a description.', not_configured: 'The database is not connected in Vercel.', bad_pin: 'PIN expired. Reload the page and sign in again.' };
@@ -37,6 +43,8 @@ export function StaffInvoices({ pin }: { pin: string }) {
   const [q, setQ] = useState('');
   const [only, setOnly] = useState<'all' | 'unpaid'>('all');
   const [confirmDel, setConfirmDel] = useState(false);
+  const [copiedFrom, setCopiedFrom] = useState('');
+  const duplicate = (i: InvoiceDraft) => { setCopiedFrom(i.number || ''); setConfirmDel(false); setError(''); setDraft(duplicateOf(i)); window.scrollTo({ top: 0 }); };
 
   const call = async (body: Record<string, unknown>) => {
     setBusy(true); setError('');
@@ -64,15 +72,21 @@ export function StaffInvoices({ pin }: { pin: string }) {
     const save = async (thenDownload: boolean) => {
       const r = await call({ action: 'save', invoice: draft });
       if (!r?.saved) return;
-      setDraft(r.saved);
+      setDraft(r.saved); setCopiedFrom('');
       if (thenDownload) await downloadInvoicePdf(r.saved);
     };
     return (
       <form onSubmit={e => { e.preventDefault(); save(false); }} className={`${glass} p-6 sm:p-8 space-y-5 max-w-3xl mx-auto w-full`}>
         <div className="flex items-center justify-between gap-3">
           <p className="text-[11px] font-black uppercase tracking-widest text-[#C4956A]">{draft.number ? `Invoice ${draft.number}` : 'New Invoice'}</p>
-          <button type="button" onClick={() => { setDraft(null); setError(''); setConfirmDel(false); }} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white"><X size={14} /> Close</button>
+          <div className="flex items-center gap-4">
+            {draft.id && <button type="button" onClick={() => duplicate(draft)} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#C4956A] hover:text-white"><Copy size={13} /> Duplicate</button>}
+            <button type="button" onClick={() => { setDraft(null); setError(''); setConfirmDel(false); setCopiedFrom(''); }} className="flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white"><X size={14} /> Close</button>
+          </div>
         </div>
+        {copiedFrom && !draft.id && (
+          <p className="text-xs font-bold text-[#C4956A] bg-[#C4956A]/10 border border-[#C4956A]/30 rounded-xl px-4 py-3">Copy of {copiedFrom}. Edit anything, then save to create a new invoice with its own number.</p>
+        )}
 
         <div className="grid sm:grid-cols-2 gap-3">
           <div className="space-y-1.5 min-w-0"><label htmlFor="i-name" className={label}>Client or Brand</label>
@@ -208,6 +222,8 @@ export function StaffInvoices({ pin }: { pin: string }) {
               <p className="font-black uppercase tracking-tight truncate">{i.client.name}</p>
               <p className="text-xs text-white/45">{shortDate(i.date)} · {lkr(t.total)}{t.balance > 0 ? ` · ${lkr(t.balance)} due` : ''}</p>
             </button>
+            <button type="button" aria-label={`Duplicate ${i.number}`} title="Duplicate" onClick={() => duplicate(i)}
+              className="shrink-0 w-12 flex items-center justify-center border-l border-white/[0.08] text-white/50 hover:text-[#C4956A]"><Copy size={17} /></button>
             <button type="button" aria-label={`Download ${i.number} as PDF`} onClick={() => downloadInvoicePdf(i)}
               className="shrink-0 w-14 flex items-center justify-center border-l border-white/[0.08] text-white/50 hover:text-[#C4956A]"><Download size={18} /></button>
           </li>
