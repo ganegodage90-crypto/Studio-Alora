@@ -32,7 +32,7 @@ export const WHATSAPP_INTL = '94769123653';
 export const EMAIL = 'studioalora@gmail.com';
 export const ADDRESS = '136/B, 12th Lane, Saraboomi Residencies, Piliyandala';
 export const STUDIO_NAME = 'Studio Alora – The Visual Collective';
-export const BANK = { bank: 'Nations Trust Bank', name: 'K K DILSHAN', account: '200560043329' };
+export const BANK = { bank: 'Nations Trust Bank', branch: 'Ratnapura', name: 'G.T.S. KUMARA', account: '200410031223' };
 export const LINKS = {
   facebook: 'https://www.facebook.com/StudioAlora/',
   instagram: 'https://www.instagram.com/studio_alora_lk/',
