@@ -728,7 +728,7 @@ export default function App() {
               <div className="space-y-4">
                 <div className="space-y-1">
                   <span className="text-white/25 text-[10px] font-black uppercase tracking-widest">Bank</span>
-                  <p className="text-lg font-bold text-white/80">{BANK_DETAILS.bank}</p>
+                  <p className="text-lg font-bold text-white/80">{BANK_DETAILS.bank} — {BANK_DETAILS.branch}</p>
                 </div>
                 <div className="space-y-1">
                   <span className="text-white/25 text-[10px] font-black uppercase tracking-widest">Account Name</span>

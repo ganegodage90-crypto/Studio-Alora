@@ -111,7 +111,7 @@ export async function downloadInvoicePdf(inv: InvoiceDraft) {
   // Payment details (left of totals)
   y = top;
   label('Payment details', M, y - 1);
-  [['Bank', BANK.bank], ['Account name', BANK.name], ['Account number', BANK.account], ['Method', inv.method || '—']].forEach(([l, v], i) => {
+  [['Bank', BANK.bank], ['Branch', BANK.branch], ['Account name', BANK.name], ['Account number', BANK.account], ['Method', inv.method || '—']].forEach(([l, v], i) => {
     text(l, M, y + 5 + i * 5.4, { size: 9, color: grey }); text(v, M + 30, y + 5 + i * 5.4, { size: 9.5, bold: true });
   });
   y = Math.max(afterTotals, top + 30);
