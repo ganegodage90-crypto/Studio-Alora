@@ -27,7 +27,8 @@ import { api, PackageView, hrs } from './lib/packages';
 import { Invoice, InvoiceDraft, downloadInvoicePdf, rate2, rateStr } from './lib/invoices';
 import { Link } from 'react-router-dom';
 import { glass, glassSolid, KindToggle } from './components/Shell';
-import { RATES, SITE_URL, SITE_HOST, HOTLINE, BANK, lkr } from './lib/site';
+import { RATES, SITE_URL, SITE_HOST, HOTLINE, lkr } from './lib/site';
+import { BUILT_IN_BANK, currentBank } from './lib/banks';
 
 
 const HOURLY_RATE_MIN = RATES.nonCommercial.firstHour;
@@ -36,7 +37,6 @@ const COMMERCIAL_RATE_MIN = RATES.commercial.firstHour;
 const COMMERCIAL_RATE_EXTENDED = RATES.commercial.perHour;
 const HELP_PHONE_NUMBER = HOTLINE;
 const GOOGLE_REVIEW_URL = 'https://g.page/r/CQJsMMv_cZxQEAE/review';
-const BANK_DETAILS = BANK;
 const COCO = '#C4956A';
 
 
@@ -71,6 +71,9 @@ export default function App() {
     return 'IDLE';
   });
   const [elapsed, setElapsed] = useState(0);
+  // Bank Transfer screen shows the default account set by staff on /staff.
+  const [BANK_DETAILS, setBankDetails] = useState(BUILT_IN_BANK);
+  useEffect(() => { currentBank().then(setBankDetails); }, []);
   const [showHelp, setShowHelp] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showTestMode, setShowTestMode] = useState(false);

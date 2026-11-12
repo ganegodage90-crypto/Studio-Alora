@@ -1,10 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Copy, Download, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
+import { Copy, Download, Landmark, Loader2, Plus, Search, Trash2, X } from 'lucide-react';
 import { glass, field, label, primaryBtn, ghostBtn } from './Shell';
 import { api } from '../lib/packages';
 import { Invoice, InvoiceDraft, InvoiceItem, emptyInvoice, totals, downloadInvoicePdf, rate2, rateStr } from '../lib/invoices';
 import { RATES, PACKAGES, lkr } from '../lib/site';
 import { cn } from '../lib/utils';
+import { StaffBanks, BankBook } from './StaffBanks';
+import { BankDetails, BUILT_IN_BANK, bankLine, sameBank } from '../lib/banks';
+
+/** Only the printed fields of an account (no id). */
+const details = (a: BankDetails): BankDetails => ({ bank: a.bank, branch: a.branch, name: a.name, account: a.account });
 
 const PRESETS: { label: string; item: { desc: string; qty: number; rate: number } }[] = [
   { label: '1 hr · Non-comm', item: { desc: 'Studio session – Non-commercial, 1 hour', qty: 1, rate: RATES.nonCommercial.firstHour } },
@@ -29,6 +34,7 @@ const priced = (std: number, disc: number | null): Pick<InvoiceItem, 'rate' | 's
 const duplicateOf = (i: InvoiceDraft): InvoiceDraft => ({
   date: Date.now(), client: { ...i.client }, items: i.items.map(x => ({ ...x })),
   discount: i.discount, advance: 0, method: i.method, status: 'unpaid', notes: i.notes,
+  ...(i.bank ? { bank: { ...i.bank } } : {}),
 });
 
 const dateInput = (ms: number) => new Date(ms - new Date(ms).getTimezoneOffset() * 60000).toISOString().slice(0, 10);
@@ -44,6 +50,10 @@ export function StaffInvoices({ pin }: { pin: string }) {
   const [only, setOnly] = useState<'all' | 'unpaid'>('all');
   const [confirmDel, setConfirmDel] = useState(false);
   const [copiedFrom, setCopiedFrom] = useState('');
+  const [banks, setBanks] = useState<BankBook>({ accounts: [], defaultId: null });
+  const [showBanks, setShowBanks] = useState(false);
+  const defaultAcc = banks.accounts.find(a => a.id === banks.defaultId) || banks.accounts[0] || null;
+  const defaultDetails = defaultAcc ? details(defaultAcc) : BUILT_IN_BANK;
   const duplicate = (i: InvoiceDraft) => { setCopiedFrom(i.number || ''); setConfirmDel(false); setError(''); setDraft(duplicateOf(i)); window.scrollTo({ top: 0 }); };
 
   const call = async (body: Record<string, unknown>) => {
@@ -56,7 +66,10 @@ export function StaffInvoices({ pin }: { pin: string }) {
       return r;
     } catch { setBusy(false); setError('No connection. Try again.'); return null; }
   };
-  useEffect(() => { call({ action: 'list' }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    call({ action: 'list' });
+    api<BankBook>('bank-accounts', { pin, action: 'list' }).then(r => { if (r.ok) setBanks({ accounts: r.accounts, defaultId: r.defaultId }); }).catch(() => {});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const shown = useMemo(() => (list || []).filter(i =>
     (only === 'all' || i.status === 'unpaid') &&
@@ -65,6 +78,7 @@ export function StaffInvoices({ pin }: { pin: string }) {
 
   if (draft) {
     const t = totals(draft);
+    const bankChoice = !draft.bank ? '' : (banks.accounts.find(a => sameBank(a, draft.bank))?.id ?? 'other');
     const set = (patch: Partial<InvoiceDraft>) => setDraft({ ...draft, ...patch });
     const setClient = (k: keyof InvoiceDraft['client']) => (e: React.ChangeEvent<HTMLInputElement>) => set({ client: { ...draft.client, [k]: e.target.value } });
     const setItem = (i: number, patch: Partial<InvoiceDraft['items'][number]>) => set({ items: draft.items.map((it, j) => (j === i ? { ...it, ...patch } : it)) });
@@ -103,6 +117,17 @@ export function StaffInvoices({ pin }: { pin: string }) {
             <select id="i-method" className={field} value={draft.method} onChange={e => set({ method: e.target.value })}>
               {[...new Set(['Cash', 'Bank Transfer', 'Monthly Package', draft.method])].filter(Boolean).map(m => <option key={m} className="bg-[#1a1512]">{m}</option>)}
             </select></div>
+          <div className="space-y-1.5 min-w-0 sm:col-span-2"><label htmlFor="i-bank" className={label}>Bank Account on Invoice</label>
+            <select id="i-bank" className={field} value={bankChoice} onChange={e => {
+              const v = e.target.value;
+              if (v === '') { const { bank: _b, ...rest } = draft; setDraft(rest); return; } // eslint-disable-line @typescript-eslint/no-unused-vars
+              const a = banks.accounts.find(x => x.id === v); if (a) set({ bank: details(a) });
+            }}>
+              {!draft.bank && <option value="" className="bg-[#1a1512]">Studio default — {bankLine(defaultDetails)}</option>}
+              {banks.accounts.map(a => <option key={a.id} value={a.id} className="bg-[#1a1512]">{bankLine(a)}{a.id === banks.defaultId ? ' (default)' : ''}</option>)}
+              {draft.bank && bankChoice === 'other' && <option value="other" className="bg-[#1a1512]">{bankLine(draft.bank)} (no longer saved)</option>}
+            </select>
+            <p className="text-[10px] text-white/30">Add or change accounts with the Bank Accounts button on the invoice list.</p></div>
         </div>
 
         <div className="space-y-3">
@@ -196,8 +221,12 @@ export function StaffInvoices({ pin }: { pin: string }) {
             <p className={label}>Outstanding</p>
             <p className="text-2xl font-black italic tabular-nums text-[#C4956A]">{lkr(outstanding)}</p>
           </div>
-          <button type="button" onClick={() => setDraft(emptyInvoice())} className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#C4956A] text-black font-black uppercase tracking-tighter"><Plus size={18} /> New Invoice</button>
+          <div className="flex flex-wrap gap-2">
+          <button type="button" aria-pressed={showBanks} onClick={() => setShowBanks(!showBanks)} className={cn('flex items-center gap-2 px-4 py-3 rounded-2xl border font-black uppercase tracking-tighter', showBanks ? 'border-[#C4956A] text-[#C4956A]' : 'border-white/[0.12] text-white/70 hover:border-[#C4956A]/40')}><Landmark size={18} /> Bank Accounts</button>
+          <button type="button" onClick={() => setDraft({ ...emptyInvoice(), ...(defaultAcc ? { bank: details(defaultAcc) } : {}) })} className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-[#C4956A] text-black font-black uppercase tracking-tighter"><Plus size={18} /> New Invoice</button>
+          </div>
         </div>
+        <p className="text-xs text-white/40 flex items-center gap-1.5"><Landmark size={12} className="shrink-0" /> Default account: <span className="text-white/70 font-bold truncate">{bankLine(defaultDetails)}</span></p>
         <div className="flex gap-2">
           <div className="relative flex-1 min-w-0">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" size={16} />
@@ -207,6 +236,7 @@ export function StaffInvoices({ pin }: { pin: string }) {
             className={cn('shrink-0 px-4 rounded-2xl border text-[10px] font-black uppercase tracking-widest', only === 'unpaid' ? 'bg-[#C4956A] text-black border-[#C4956A]' : 'border-white/[0.1] text-white/50')}>Unpaid only</button>
         </div>
       </div>
+      {showBanks && <StaffBanks pin={pin} book={banks} onBook={setBanks} onClose={() => setShowBanks(false)} />}
       {error && <p role="alert" className="text-red-400 text-sm font-bold text-center">{error}</p>}
       {!list && busy && <p className="text-center text-white/40 py-8"><Loader2 className="inline animate-spin" size={20} /></p>}
       {list && shown.length === 0 && <div className={`${glass} p-8 text-center text-white/50 font-bold`}>{list.length === 0 ? 'No invoices yet. One is created automatically after each session.' : 'No invoices match.'}</div>}
