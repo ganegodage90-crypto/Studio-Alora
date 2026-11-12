@@ -118,5 +118,24 @@ export function cleanInvoice(b) {
     client: { name: text(c.name, 80), phone: text(c.phone, 30), address: text(c.address, 200), email: text(c.email, 120) },
     items, discount: money(b.discount), advance: money(b.advance),
     method: text(b.method, 40), status: b.status === 'paid' ? 'paid' : 'unpaid', notes: text(b.notes, 500),
+    ...(cleanBank(b.bank) ? { bank: cleanBank(b.bank) } : {}),
   };
+}
+
+// ---- Bank accounts --------------------------------------------------------
+// Staff keep a list of accounts; one is the default. The default is shown on the
+// check-in Bank Transfer screen and printed on invoices that do not name their own.
+const BANKS = 'alora:banks';
+export async function bankBook() {
+  const raw = await redis(['GET', BANKS]);
+  const b = raw ? JSON.parse(raw) : null;
+  return { accounts: Array.isArray(b?.accounts) ? b.accounts : [], defaultId: b?.defaultId || null };
+}
+export const saveBankBook = b => redis(['SET', BANKS, JSON.stringify(b)]);
+export const defaultBank = book => book.accounts.find(a => a.id === book.defaultId) || book.accounts[0] || null;
+/** A bank account with only known fields, or null when the name or number is missing. */
+export function cleanBank(a) {
+  if (!a || typeof a !== 'object') return null;
+  const out = { bank: text(a.bank, 60), branch: text(a.branch, 60), name: text(a.name, 80), account: text(a.account, 40) };
+  return out.name && out.account ? out : null;
 }

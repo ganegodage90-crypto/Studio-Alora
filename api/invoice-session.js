@@ -1,6 +1,6 @@
 // Called by the check-in screen when a session is paid: stores a numbered invoice for it.
 // A repeat call for the same session returns the invoice already stored.
-import { dbReady, allInvoices, saveInvoice, nextInvoiceNumber, cleanInvoice, newId, send } from './_lib.js';
+import { dbReady, allInvoices, saveInvoice, nextInvoiceNumber, cleanInvoice, newId, send, bankBook, defaultBank } from './_lib.js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return send(res, 405, { ok: false });
@@ -13,7 +13,9 @@ export default async function handler(req, res) {
     const key = `s${startedAt}`;
     const existing = (await allInvoices()).find(x => x.sessionKey === key);
     if (existing) return send(res, 200, { ok: true, invoice: existing });
-    const data = cleanInvoice({ ...(b.invoice || {}), date: endedAt });
+    // The account is the studio's current default, never one sent by the browser.
+    const bank = defaultBank(await bankBook());
+    const data = cleanInvoice({ ...(b.invoice || {}), date: endedAt, bank });
     if (!data.client.name || data.items.length === 0) return send(res, 400, { ok: false, error: 'bad_input' });
     const invoice = { id: newId(), ...(await nextInvoiceNumber()), ...data, source: 'session', sessionKey: key, createdAt: now, updatedAt: now };
     await saveInvoice(invoice);

@@ -1,4 +1,5 @@
-import { STUDIO_NAME, ADDRESS, HOTLINE, EMAIL, BANK, SITE_HOST } from './site';
+import { STUDIO_NAME, ADDRESS, HOTLINE, EMAIL, SITE_HOST } from './site';
+import { BankDetails, currentBank } from './banks';
 
 /** `rate` is what the client pays per unit. `std` is the standard rate, set only on a discounted line. */
 export interface InvoiceItem { desc: string; qty: number; rate: number; std?: number }
@@ -10,6 +11,8 @@ export interface InvoiceDraft {
   client: { name: string; phone: string; address: string; email: string };
   items: InvoiceItem[]; discount: number; advance: number;
   method: string; status: 'paid' | 'unpaid'; notes: string;
+  /** The account printed on this invoice. When missing, the studio's current default is printed. */
+  bank?: BankDetails;
 }
 export interface Invoice extends InvoiceDraft { id: string; number: string; seq: number; source: 'staff' | 'session'; createdAt: number; updatedAt: number }
 
@@ -37,7 +40,7 @@ const loadLogo = () => (logoCache ||= fetch('/logo.png').then(r => r.blob()).the
 
 /** Builds the A4 invoice and saves it as "Studio-Alora-SA-0001-Client.pdf". */
 export async function downloadInvoicePdf(inv: InvoiceDraft) {
-  const [{ jsPDF }, logo] = await Promise.all([import('jspdf'), loadLogo()]);
+  const [{ jsPDF }, logo, bank] = await Promise.all([import('jspdf'), loadLogo(), inv.bank ? Promise.resolve(inv.bank) : currentBank()]);
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
   const W = 210, M = 18, R = W - M;
   const gold: [number, number, number] = [166, 120, 72], ink: [number, number, number] = [20, 16, 12], grey: [number, number, number] = [120, 115, 108];
@@ -111,7 +114,7 @@ export async function downloadInvoicePdf(inv: InvoiceDraft) {
   // Payment details (left of totals)
   y = top;
   label('Payment details', M, y - 1);
-  [['Bank', BANK.bank], ['Branch', BANK.branch], ['Account name', BANK.name], ['Account number', BANK.account], ['Method', inv.method || '—']].forEach(([l, v], i) => {
+  [['Bank', bank.bank || '—'], ['Branch', bank.branch || '—'], ['Account name', bank.name], ['Account number', bank.account], ['Method', inv.method || '—']].forEach(([l, v], i) => {
     text(l, M, y + 5 + i * 5.4, { size: 9, color: grey }); text(v, M + 30, y + 5 + i * 5.4, { size: 9.5, bold: true });
   });
   y = Math.max(afterTotals, top + 30);
